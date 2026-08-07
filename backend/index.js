@@ -17,12 +17,20 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://indolankamatrimony.vercel.app",
-      "http://localhost:7000",
-      "https://indolankamatrimony-admin.vercel.app",
-    ],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "http://localhost:7000",
+        "https://indolankamatrimony.vercel.app",
+        "https://indolankamatrimony-admin.vercel.app",
+      ];
+      // Allow requests with no origin (like mobile apps or curl) or allowed origins or any vercel.app subdomain
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["POST", "GET", "PUT", "DELETE"],
     credentials: true,
   })
