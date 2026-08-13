@@ -30,7 +30,7 @@ function BannerCarousel() {
     <div className="carousel-container">
       <Slider {...settings}>
         {image_data.map((image) => (
-          <div key={image.id} className="slide-item-wrapper rounded-2xl">
+          <div key={image.id} className="slide-item-wrapper">
             <img
               src={image.url}
               alt={image.alt}
