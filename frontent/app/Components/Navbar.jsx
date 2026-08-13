@@ -21,7 +21,7 @@ const LinkSkeleton = ({ isMobile }) => (
 );
 
 const Navbar = () => {
-  const [isFixed, setIsFixed] = useState(true);
+  const [isFixed, setIsFixed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const dispatch = useDispatch();
   const { isAuthenticated, isAuthChecked } = useSelector(
@@ -45,6 +45,7 @@ const Navbar = () => {
         setIsFixed(false);
       }
     };
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
