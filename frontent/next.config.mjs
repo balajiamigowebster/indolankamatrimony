@@ -1,16 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  //   images: {
-  //     remotePatterns: [
-  //       {
-  //         protocol: "https",
-  //         //hostname: process.env.NEXT_PUBLIC_API_URL_PRODUCTION,
-  //         port: "",
-  //         pathname: "/**",
-  //       },
-  //     ],
-  //   },
-  // output: "export",
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: process.env.NODE_ENV === 'production'
+          ? 'https://amigowebster.in/indolanka_v2/api/:path*'
+          : 'http://localhost:5000/api/:path*'
+      }
+    ];
+  }
 };
 
 export default nextConfig;
