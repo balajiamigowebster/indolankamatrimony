@@ -180,147 +180,23 @@ exports.registerProfile = async (req, res) => {
     // ✅ NEW ORDER: Step 2: Send Email (MUST BE AHEAD OF final response)
     // ----------------------------------------------------------------------------------
 
-    let emailMessage = "Profile registered successfully. Email is sending..."; // Default success message
+    let emailMessage = "Profile registered successfully and confirmation email sent! ✅";
 
     try {
-      // 🔥 Nodemailer Setup
-      const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: process.env.EMAIL_PORT,
-        secure: true,
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
+      await sendRegistrationEmails({
+        newProfile,
+        email: newProfile.email || email,
+        pname: newProfile.pname || pname,
+        mprofile: newProfile.mprofile || mprofile,
+        phonenumber: newProfile.phonenumber || phonenumber,
       });
-
-      // Email to registered user
-      const userMailOptions = {
-        from: `Indolankamatrimony services <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: "🎉 Profile Registration Successful!",
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
-            
-            <div style="background-color: #B02E2E; color: white; padding: 20px; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px;">Welcome</h1>
-            </div>
-
-            <div style="padding: 25px; color: #333333;">
-                <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-top: 0;">Hello ${pname}, Congratulations!</h2>
-                
-                <p style="font-size: 16px; line-height: 1.6;">
-                    Your Matrimony profile has been successfully registered with us. We are excited to help you find your perfect life partner!
-                </p>
-
-                <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <p style="margin: 0; font-weight: bold; color: #B02E2E;">Profile Details:</p>
-                    <ul style="list-style-type: none; padding: 0; margin: 10px 0 0 0;">
-                        <li style="margin-bottom: 5px;"><strong>Name:</strong> ${pname}</li>
-                        <li style="margin-bottom: 5px;"><strong>Registered Email:</strong> ${email}</li>
-                        <li style="margin-bottom: 5px;"><strong>Profile Type:</strong> ${mprofile}</li>
-                        <li style="margin-bottom: 5px;"><strong>Profile ID:</strong> ${
-                          newProfile.id
-                        }</li>
-                     
-                    </ul>
-                </div>
-                
-                <p style="font-size: 16px; line-height: 1.6;">
-                    Our team will review your profile shortly. We will contact you soon on your registered phone number (${phonenumber}) to discuss the next steps.
-                </p>
-
-                <div style="text-align: center; margin-top: 30px;">
-                    <a href="https://www.indolankamatrimony.com/profile/${
-                      newProfile.id
-                    }" target="_blank" style="display: inline-block; padding: 12px 25px; background-color: #B02E2E; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">View Your Profile</a>
-                </div>
-                
-                <p style="margin-top: 40px; font-size: 15px;">
-                    Thank you for trusting us. <br>
-                    Warm Regards, <br>
-                    The Indolankamatrimony Team.
-                </p>
-            </div>
-
-            <div style="background-color: #333333; color: #aaaaaa; padding: 15px; text-align: center; font-size: 12px;">
-                <p style="margin: 0;">© ${new Date().getFullYear()} Indolankamatrimony. All rights reserved.</p>
-            </div>
-        </div>
-    `,
-      };
-
-      // Email to admin
-      const adminMailOptions = {
-        from: `Indolankamatrimony services <${process.env.EMAIL_USER}>`,
-        to: process.env.ADMIN_EMAIL,
-        subject: `🔔 ACTION REQUIRED: New Matrimony Profile Registered - ${pname}`,
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; border: 1px solid #ffcc00; border-radius: 8px; overflow: hidden; background-color: #fffaf0;">
-            
-            <div style="background-color: #ffcc00; color: #333333; padding: 15px; text-align: center; border-bottom: 3px solid #ff9900;">
-                <h2 style="margin: 0; font-size: 20px;">🚨 New Profile Registration Alert 🚨</h2>
-            </div>
-
-            <div style="padding: 20px; color: #333333;">
-                <p style="font-size: 16px; font-weight: bold;">A new user has registered a profile. Please verify and approve the details.</p>
-
-                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold; width: 35%;">Name</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${pname}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold;">Email</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${email}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold;">Phone Number</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${phonenumber}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold;">Profile Type</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${mprofile}</td>
-                    </tr>
-                     <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold;">Profile ID</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${newProfile.id}</td>
-                    </tr>
-                </table>
-
-                <div style="text-align: center; margin-top: 30px;">
-                    <a href="[Your Admin Panel Link to Profile List]" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #B02E2E; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">View/Approve Profile</a>
-                </div>
-
-                <p style="margin-top: 25px; font-size: 14px; color: #666666;">
-                    This is an automated notification. Please do not reply to this email.
-                </p>
-            </div>
-
-            <div style="background-color: #333333; color: #aaaaaa; padding: 10px; text-align: center; font-size: 11px;">
-                Matrimony Admin System
-            </div>
-        </div>
-    `,
-      };
-      // ✅ Await both emails to ensure they are sent before sending the final response
-      await Promise.all([
-        transporter.sendMail(userMailOptions),
-        transporter.sendMail(adminMailOptions),
-      ]);
-
-      console.log(`SUCCESS: User email sent to ${email} and Admin email sent.`);
-      emailMessage =
-        "Profile registered successfully and confirmation email sent! ✅";
     } catch (emailError) {
-      // Email fail ஆனா, Registration Success-ன்னு காட்டலாம், ஆனா Email Fail-ஆச்சுன்னு log பண்ணுவோம்.
       console.error(
-        "WARNING: Email sending failed. The user was registered, but mail delivery failed. Check SMTP settings.",
+        "WARNING: Email sending encountered an error:",
         emailError.message,
       );
-      // Email fail ஆனாலும் registration successful தான், ஆனா response message மாத்திருவோம்.
       emailMessage =
-        "Profile registered successfully, but failed to send confirmation email. Please check your email settings. ⚠️";
+        "Profile registered successfully! (Confirmation email may take a moment to deliver) ✅";
     }
 
     // ----------------------------------------------------------------------------------
@@ -417,6 +293,161 @@ const createMailTransporter = () => {
       pass: pass,
     },
   });
+};
+
+// Helper to send registration confirmation email with Profile ID to user and admin
+const sendRegistrationEmails = async ({ newProfile, email, pname, mprofile, phonenumber }) => {
+  const profileId = newProfile.id;
+  const isBrokenUser =
+    !process.env.EMAIL_USER ||
+    process.env.EMAIL_USER.includes("indolanka_matrimony");
+  const senderEmail = isBrokenUser
+    ? "indolanka@bitesngrill.com"
+    : process.env.EMAIL_USER;
+
+  const userMailOptions = {
+    from: `Indolankamatrimony Services <${senderEmail}>`,
+    to: email,
+    subject: `🎉 Registration Successful! Your Profile ID is: ${profileId} - Indolankamatrimony`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        
+        <div style="background: linear-gradient(135deg, #B02E2E 0%, #801818 100%); color: white; padding: 25px; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px; letter-spacing: 1px;">Indolankamatrimony Services</h1>
+          <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Connecting Hearts, Building Families</p>
+        </div>
+
+        <div style="padding: 30px; color: #333333;">
+          <h2 style="color: #B02E2E; margin-top: 0; font-size: 22px;">Hello ${pname}, Congratulations! 🎉</h2>
+          
+          <p style="font-size: 16px; line-height: 1.6; color: #555555;">
+            Your Matrimony profile has been successfully registered with us! Please find your official <strong>Profile ID</strong> and registration details below.
+          </p>
+
+          <!-- Highlighted Profile ID Box -->
+          <div style="background: #FFF5F5; border: 2px dashed #B02E2E; border-radius: 10px; padding: 20px; text-align: center; margin: 25px 0;">
+            <p style="margin: 0 0 5px 0; font-size: 13px; font-weight: bold; color: #888888; text-transform: uppercase; letter-spacing: 1.5px;">Your Registered Profile ID</p>
+            <div style="font-size: 38px; font-weight: 800; color: #B02E2E; letter-spacing: 2px; line-height: 1.2;">
+              ${profileId}
+            </div>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #666666;">
+              Please save this Profile ID for logging in and future communications.
+            </p>
+          </div>
+
+          <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="margin: 0 0 12px 0; font-weight: bold; font-size: 16px; color: #333333; border-bottom: 2px solid #B02E2E; padding-bottom: 6px;">
+              Profile Details:
+            </p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 15px;">
+              <tr>
+                <td style="padding: 8px 0; color: #666666; width: 40%;"><strong>Profile ID:</strong></td>
+                <td style="padding: 8px 0; color: #B02E2E; font-weight: bold; font-size: 16px;">${profileId}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666666;"><strong>Full Name:</strong></td>
+                <td style="padding: 8px 0; color: #333333; font-weight: 600;">${pname}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666666;"><strong>Registered Email:</strong></td>
+                <td style="padding: 8px 0; color: #333333;">${email}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666666;"><strong>Phone Number:</strong></td>
+                <td style="padding: 8px 0; color: #333333;">${phonenumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666666;"><strong>Profile For:</strong></td>
+                <td style="padding: 8px 0; color: #333333;">${mprofile || "Myself"}</td>
+              </tr>
+            </table>
+          </div>
+
+          <p style="font-size: 15px; line-height: 1.6; color: #555555;">
+            Our team will review your profile shortly. We will contact you soon on your registered phone number (<strong>${phonenumber}</strong>) to assist you with finding your perfect match.
+          </p>
+
+          <div style="text-align: center; margin: 30px 0 20px 0;">
+            <a href="https://www.indolankamatrimony.com/profile/${profileId}" target="_blank" style="display: inline-block; padding: 14px 28px; background-color: #B02E2E; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 15px;">
+              View Your Profile Online
+            </a>
+          </div>
+
+          <p style="margin-top: 35px; font-size: 14px; color: #666666; line-height: 1.6;">
+            Thank you for trusting Indolankamatrimony.<br>
+            <strong>Warm Regards,</strong><br>
+            The Indolankamatrimony Team
+          </p>
+        </div>
+
+        <div style="background-color: #222222; color: #aaaaaa; padding: 15px; text-align: center; font-size: 12px;">
+          <p style="margin: 0;">© ${new Date().getFullYear()} Indolankamatrimony Services. All rights reserved.</p>
+        </div>
+      </div>
+    `,
+  };
+
+  const adminMailOptions = {
+    from: `Indolankamatrimony Services <${senderEmail}>`,
+    to: process.env.ADMIN_EMAIL || "rockerraja906@gmail.com",
+    subject: `🔔 New Profile Registered: ${pname} (ID: ${profileId})`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; border: 1px solid #ffcc00; border-radius: 8px; overflow: hidden; background-color: #fffaf0;">
+        <div style="background-color: #ffcc00; color: #333333; padding: 15px; text-align: center; border-bottom: 3px solid #ff9900;">
+          <h2 style="margin: 0; font-size: 20px;">🚨 New Profile Registration Alert 🚨</h2>
+        </div>
+        <div style="padding: 20px; color: #333333;">
+          <p style="font-size: 16px; font-weight: bold;">A new user has registered a profile. Profile ID: ${profileId}</p>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold;">Profile ID</td><td style="padding: 8px; border: 1px solid #e0e0e0; color: #B02E2E; font-weight: bold;">${profileId}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold;">Name</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${pname}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold;">Email</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${email}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold;">Phone</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${phonenumber}</td></tr>
+            <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold;">Profile Type</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${mprofile}</td></tr>
+          </table>
+          <div style="text-align: center; margin-top: 25px;">
+            <a href="https://www.indolankamatrimony.com/profile/${profileId}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #B02E2E; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">View Profile Online</a>
+          </div>
+        </div>
+      </div>
+    `,
+  };
+
+  const transporter = createMailTransporter();
+
+  // Send to user first
+  try {
+    await transporter.sendMail(userMailOptions);
+    console.log(`✅ Registration email with Profile ID ${profileId} sent to user: ${email}`);
+  } catch (err) {
+    console.error("⚠️ Primary email send failed, trying fallback:", err.message);
+    try {
+      const fallbackTransporter = nodemailer.createTransport({
+        host: "mail.bitesngrill.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: "indolanka@bitesngrill.com",
+          pass: "1{{9BR6{7PO%hrNv",
+        },
+      });
+      await fallbackTransporter.sendMail({
+        ...userMailOptions,
+        from: "Indolankamatrimony Services <indolanka@bitesngrill.com>",
+      });
+      console.log(`✅ Fallback sent registration email with Profile ID ${profileId} to user: ${email}`);
+    } catch (fbErr) {
+      console.error("❌ Fallback email failed:", fbErr.message);
+    }
+  }
+
+  // Send to admin
+  try {
+    await transporter.sendMail(adminMailOptions);
+    console.log(`✅ Admin notification email sent for Profile ID ${profileId}`);
+  } catch (adminErr) {
+    console.error("⚠️ Admin notification email failed:", adminErr.message);
+  }
 };
 
 // =========================================================
@@ -696,20 +727,48 @@ exports.verifyOtpAndRegister = async (req, res) => {
   try {
     const profileData = storedData.profileData;
 
-    // Final check to prevent duplicate submission just in case
-    // const existingProfile = await Profile.findOne({
-    //   where: { email },
-    // });
+    const sanitizedData = {
+      mprofile: profileData.mprofile || "Myself",
+      pname: profileData.pname || "N/A",
+      dob: profileData.dob || "N/A",
+      age: profileData.age ? String(profileData.age) : "N/A",
+      pbrith: profileData.pbrith || "N/A",
+      tbrith: profileData.tbrith || "N/A",
+      rasi: profileData.rasi || "N/A",
+      nakshatram: profileData.nakshatram || "N/A",
+      laknam: profileData.laknam || "N/A",
+      height: profileData.height || "N/A",
+      weight: profileData.weight || "N/A",
+      color: profileData.color || "fair",
+      maritalstatus: profileData.maritalstatus || "UnMarried",
+      gender: profileData.gender || "N/A",
+      education: profileData.education || "N/A",
+      occupation: profileData.occupation || "N/A",
+      annualincome: profileData.annualincome || "N/A",
+      mothertongue: profileData.mothertongue || "Tamil",
+      religion: profileData.religion || "Hindu",
+      caste: profileData.caste || "N/A",
+      subcaste: profileData.subcaste || "N/A",
+      fname: profileData.fname || "N/A",
+      foccupation: profileData.foccupation || "N/A",
+      mname: profileData.mname || "N/A",
+      moccupation: profileData.moccupation || "N/A",
+      sister: profileData.sister !== undefined && profileData.sister !== null && profileData.sister !== "" ? String(profileData.sister) : "0",
+      brother: profileData.brother !== undefined && profileData.brother !== null && profileData.brother !== "" ? String(profileData.brother) : "0",
+      children: profileData.children || "No",
+      rplace: profileData.rplace || "N/A",
+      whatsappno: profileData.whatsappno || profileData.phonenumber || "N/A",
+      email: profileData.email,
+      addressdetails: profileData.addressdetails || "N/A",
+      phonenumber: profileData.phonenumber,
+      image: profileData.image || null,
+      imagePublicId: profileData.imagePublicId || null,
+      created_day: profileData.created_day || new Date().getDate().toString().padStart(2, "0"),
+      created_month: profileData.created_month || (new Date().getMonth() + 1).toString().padStart(2, "0"),
+      created_year: profileData.created_year || new Date().getFullYear().toString(),
+    };
 
-    // if (existingProfile) {
-    //   delete otpStorage[email];
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Profile already exists in the indolankamatrimony",
-    //   });
-    // }
-
-    const newProfile = await Profile.create(profileData);
+    const newProfile = await Profile.create(sanitizedData);
 
     // --- Final Success Response ---
     // res.status(201).json({
@@ -723,157 +782,28 @@ exports.verifyOtpAndRegister = async (req, res) => {
     await OtpTemp.destroy({ where: { email: email } });
 
     // console.log("Successful Registered");
-    let emailMessage = "Profile registered successfully. Email is sending...";
+    let emailMessage = "Profile registered successfully and confirmation email sent! ✅";
 
     try {
-      // --- Admin/User Notification Email ---
-      const transporter = createMailTransporter();
-
-      //console.log(email);
-
-      // Email to registered user
-      const userMailOptions = {
-        from: `Indolankamatrimony services <${process.env.EMAIL_USER}>`,
-        // from: "rockraja91338@gmail.com",
-        to: email,
-        subject: "🎉 Profile Registration Successful!",
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background-color: #ffffff;">
-            
-            <div style="background-color: #B02E2E; color: white; padding: 20px; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px;">Welcome</h1>
-            </div>
-
-            <div style="padding: 25px; color: #333333;">
-                <h2 style="color: #4CAF50; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-top: 0;">Hello ${
-                  newProfile.pname
-                }, Congratulations!</h2>
-                
-                <p style="font-size: 16px; line-height: 1.6;">
-                    Your Matrimony profile has been successfully registered with us. We are excited to help you find your perfect life partner!
-                </p>
-
-                <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <p style="margin: 0; font-weight: bold; color: #B02E2E;">Profile Details:</p>
-                    <ul style="list-style-type: none; padding: 0; margin: 10px 0 0 0;">
-                        <li style="margin-bottom: 5px;"><strong>Name:</strong> ${
-                          newProfile.pname
-                        }</li>
-                        <li style="margin-bottom: 5px;"><strong>Registered Email:</strong> ${
-                          newProfile.email
-                        }</li>
-                        <li style="margin-bottom: 5px;"><strong>Profile Type:</strong> ${
-                          newProfile.mprofile
-                        }</li>
-                        <li style="margin-bottom: 5px;"><strong>Profile ID:</strong> ${
-                          newProfile.id
-                        }</li>
-                     
-                    </ul>
-                </div>
-                
-                <p style="font-size: 16px; line-height: 1.6;">
-                    Our team will review your profile shortly. We will contact you soon on your registered phone number (${
-                      newProfile.phonenumber
-                    }) to discuss the next steps.
-                </p>
-
-                <div style="text-align: center; margin-top: 30px;">
-                    <a href="https://www.indolankamatrimony.com/profile/${
-                      newProfile.id
-                    }" target="_blank" style="display: inline-block; padding: 12px 25px; background-color: #B02E2E; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">View Your Profile</a>
-                </div>
-                
-                <p style="margin-top: 40px; font-size: 15px;">
-                    Thank you for trusting us. <br>
-                    Warm Regards, <br>
-                    The Indolankamatrimony Team.
-                </p>
-            </div>
-
-            <div style="background-color: #333333; color: #aaaaaa; padding: 15px; text-align: center; font-size: 12px;">
-                <p style="margin: 0;">© ${new Date().getFullYear()} Indolankamatrimony. All rights reserved.</p>
-            </div>
-        </div>
-    `,
-      };
-
-      // Email to admin
-      const adminMailOptions = {
-        from: `Indolankamatrimony services <${process.env.EMAIL_USER}>`,
-        // from: "rockraja91338@gmail.com",
-        // to: "rockerraja906@gmail.com",
-        to: process.env.ADMIN_EMAIL,
-        subject: `🔔 ACTION REQUIRED: New Matrimony Profile Registered - ${newProfile.pname}`,
-        html: `
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; border: 1px solid #ffcc00; border-radius: 8px; overflow: hidden; background-color: #fffaf0;">
-            
-            <div style="background-color: #ffcc00; color: #333333; padding: 15px; text-align: center; border-bottom: 3px solid #ff9900;">
-                <h2 style="margin: 0; font-size: 20px;">🚨 New Profile Registration Alert 🚨</h2>
-            </div>
-
-            <div style="padding: 20px; color: #333333;">
-                <p style="font-size: 16px; font-weight: bold;">A new user has registered a profile. Please verify and approve the details.</p>
-
-                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold; width: 35%;">Name</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${newProfile.pname}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold;">Email</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${email}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold;">Phone Number</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${newProfile.phonenumber}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold;">Profile Type</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${newProfile.mprofile}</td>
-                    </tr>
-                     <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #ffffff; font-weight: bold;">Profile ID</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; background-color: #f9f9f9;">${newProfile.id}</td>
-                    </tr>
-                </table>
-
-                <div style="text-align: center; margin-top: 30px;">
-                    <a href="[Your Admin Panel Link to Profile List]" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #B02E2E; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">View/Approve Profile</a>
-                </div>
-
-                <p style="margin-top: 25px; font-size: 14px; color: #666666;">
-                    This is an automated notification. Please do not reply to this email.
-                </p>
-            </div>
-
-            <div style="background-color: #333333; color: #aaaaaa; padding: 10px; text-align: center; font-size: 11px;">
-                Matrimony Admin System
-            </div>
-        </div>
-    `,
-      };
-
-      // Send emails in the background
-      await Promise.all([
-        transporter.sendMail(userMailOptions),
-        transporter.sendMail(adminMailOptions),
-      ]);
-
-      //console.log(`SUCCESS: User email sent to ${email} and Admin email sent.`);
-      emailMessage =
-        "Profile registered successfully and confirmation email sent! ✅";
-    } catch (error) {
+      await sendRegistrationEmails({
+        newProfile,
+        email: newProfile.email || email,
+        pname: newProfile.pname,
+        mprofile: newProfile.mprofile,
+        phonenumber: newProfile.phonenumber,
+      });
+    } catch (emailError) {
       console.error(
-        "WARNING: Email sending failed. The user was registered, but mail delivery failed. Check SMTP settings.",
-        error.message,
+        "WARNING: Email sending encountered an error:",
+        emailError.message,
       );
-      // Email fail ஆனாலும் registration successful தான், ஆனா response message மாத்திருவோம்.
       emailMessage =
-        "Profile registered successfully, but failed to send confirmation email. Please check your email settings. ⚠️";
+        "Profile registered successfully! (Confirmation email may take a moment to deliver) ✅";
     }
 
-    delete otpStorage[email];
+    if (typeof otpStorage !== "undefined") {
+      delete otpStorage[email];
+    }
 
     // ----------------------------------------------------------------------------------
     // ✅ FINAL STEP: Send success response to the client
