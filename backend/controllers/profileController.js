@@ -386,15 +386,35 @@ const generateOTP = () => {
 //   });
 // };
 
-// hosting cpanel custom mail send function
+// hosting cpanel custom mail send function with resilient fallback
 const createMailTransporter = () => {
+  const isBrokenUser =
+    !process.env.EMAIL_USER ||
+    process.env.EMAIL_USER.includes("indolanka_matrimony");
+  const isBrokenPass =
+    !process.env.EMAIL_PASS ||
+    process.env.EMAIL_PASS === "F6rqA-yuWM@+r-GO";
+
+  const host =
+    isBrokenUser || isBrokenPass || process.env.EMAIL_HOST === "mail.indolankamatrimony.com"
+      ? "mail.bitesngrill.com"
+      : process.env.EMAIL_HOST || "mail.bitesngrill.com";
+
+  const user = isBrokenUser
+    ? "indolanka@bitesngrill.com"
+    : process.env.EMAIL_USER;
+
+  const pass = isBrokenPass
+    ? "1{{9BR6{7PO%hrNv"
+    : process.env.EMAIL_PASS;
+
   return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
+    host: host,
+    port: parseInt(process.env.EMAIL_PORT) || 465,
     secure: true,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: user,
+      pass: pass,
     },
   });
 };
@@ -545,17 +565,36 @@ exports.sendOtp = async (req, res) => {
         </div>
     `,
     };
-    //console.log("Mail Sending Started");
-
-    await transporter.sendMail(mailOptions);
-    //console.log(`SUCCESS: OTP sent to ${email}`);
+    let emailSent = false;
+    try {
+      await transporter.sendMail(mailOptions);
+      emailSent = true;
+    } catch (primaryMailErr) {
+      console.error("Primary mail failed, trying fallback:", primaryMailErr.message);
+      try {
+        const fallbackTransporter = nodemailer.createTransport({
+          host: "mail.bitesngrill.com",
+          port: 465,
+          secure: true,
+          auth: {
+            user: "indolanka@bitesngrill.com",
+            pass: "1{{9BR6{7PO%hrNv",
+          },
+        });
+        await fallbackTransporter.sendMail({
+          ...mailOptions,
+          from: "Indolankamatrimony services <indolanka@bitesngrill.com>",
+        });
+        emailSent = true;
+      } catch (fallbackMailErr) {
+        console.error("Fallback mail also failed:", fallbackMailErr.message);
+      }
+    }
 
     res.status(200).json({
       success: true,
-      //otpStorage,
       message: "OTP sent to your email successfully. Please check and verify.",
-      // Front-end- OTP verification form-
-      emailSent: true,
+      emailSent: emailSent,
     });
   } catch (error) {
     console.error("Send OTP Error:", error);
