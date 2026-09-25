@@ -51,10 +51,18 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
   }
 })();
 
-app.use("/api/profile", profileRoutes);
-app.use("/api/contact", contactRoutes);
-app.use("/api/admin", adminRoutes); // Base path /api/admin
-app.use("/api/adminAuth", adminAuthRoutes);
+const mountRoutes = (prefix = "") => {
+  app.use(`${prefix}/api/profile`, profileRoutes);
+  app.use(`${prefix}/api/contact`, contactRoutes);
+  app.use(`${prefix}/api/admin`, adminRoutes);
+  app.use(`${prefix}/api/adminAuth`, adminAuthRoutes);
+};
+
+// Mount on all cPanel subpaths & direct root
+mountRoutes("");
+mountRoutes("/indolankamatrimony_working");
+mountRoutes("/indolankamatrimony.com_v2");
+mountRoutes("/indolanka_v2");
 
 // only Cpanel hosting purpose using steps
 
