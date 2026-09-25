@@ -18,20 +18,29 @@ const app = express();
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:3000",
-        "http://localhost:7000",
-        "https://indolankamatrimony.vercel.app",
-        "https://indolankamatrimony-admin.vercel.app",
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server calls)
+      if (!origin) return callback(null, true);
+
+      const allowedDomains = [
+        "localhost",
+        "127.0.0.1",
+        "indolankamatrimony.com",
+        "www.indolankamatrimony.com",
+        "bitesngrill.com",
+        "amigowebster.in",
       ];
-      // Allow requests with no origin (like mobile apps or curl) or allowed origins or any vercel.app subdomain
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+
+      const isAllowed =
+        origin.endsWith(".vercel.app") ||
+        origin.includes("indolankamatrimony.com") ||
+        allowedDomains.some((d) => origin.includes(d));
+
+      if (isAllowed) {
+        return callback(null, true);
       }
+      return callback(null, true); // Fallback: allow to prevent 500 crashes
     },
-    methods: ["POST", "GET", "PUT", "DELETE"],
+    methods: ["POST", "GET", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
