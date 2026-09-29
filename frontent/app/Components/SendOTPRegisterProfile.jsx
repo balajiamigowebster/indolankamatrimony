@@ -1309,13 +1309,7 @@ export default function SendOtpRegisterProfile() {
         return;
       }
 
-      // ✅ NEW: Phone Number & Whatsapp Number Validation (10 Digits Only)
-      if (field === "phonenumber" || field === "whatsappno") {
-        if (!PHONE_NUMBER_REGEX.test(value)) {
-          newValidation[field] = "Must be exactly 10 digits (numbers only).";
-          isValid = false;
-        }
-      }
+
 
       // ✅ NEW: Email Validation (Using Regex)
       if (field === "email") {
@@ -1685,8 +1679,6 @@ export default function SendOtpRegisterProfile() {
                     type={
                       isAgeField
                         ? "number"
-                        : isPhoneNumberField
-                        ? "tel"
                         : isEmailField
                         ? "email"
                         : "text"
@@ -1697,8 +1689,6 @@ export default function SendOtpRegisterProfile() {
                     placeholder={`Enter ${field.label}`}
                     readOnly={isAgeField}
                     disabled={isAgeField && formData.age === ""}
-                    // ✅ NEW: MaxLength for Phone/Whatsapp
-                    maxLength={isPhoneNumberField ? 10 : undefined}
                     // 🔴 Input Border Update
                     className={`py-5 ${
                       isInValid

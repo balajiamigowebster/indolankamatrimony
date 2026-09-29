@@ -1673,13 +1673,7 @@ export default function SendOtpRegister() {
         return;
       }
 
-      // ✅ NEW: Phone Number & Whatsapp Number Validation (10 Digits Only)
-      if (field === "phonenumber" || field === "whatsappno") {
-        if (!PHONE_NUMBER_REGEX.test(value)) {
-          newValidation[field] = "Must be exactly 10 digits (numbers only).";
-          isValid = false;
-        }
-      }
+
 
       // ✅ NEW: Email Validation (Using Regex)
       if (field === "email") {
@@ -2352,9 +2346,7 @@ export default function SendOtpRegister() {
                         type={
                           fieldName === "email"
                             ? "email"
-                            : ["phonenumber", "whatsappno", "age"].includes(
-                                fieldName
-                              )
+                            : fieldName === "age"
                             ? "number"
                             : "text"
                         }

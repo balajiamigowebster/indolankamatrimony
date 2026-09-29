@@ -626,11 +626,6 @@ const EditProfilePage = () => {
       newFormData.age = calculateAge(value);
     }
 
-    if (name === "phonenumber" || name === "whatsappno") {
-      const cleaned = value.replace(/\D/g, "");
-      newFormData[name] = cleaned.slice(0, 10);
-    }
-
     setFormData(newFormData);
   };
 
@@ -951,8 +946,6 @@ const EditProfilePage = () => {
                           type={
                             isAgeField
                               ? "number"
-                              : isPhoneNumberField
-                              ? "tel"
                               : isEmailField
                               ? "email"
                               : "text"
@@ -962,7 +955,6 @@ const EditProfilePage = () => {
                           onChange={handleChange}
                           placeholder={`Enter ${field.label}`}
                           readOnly={isAgeField}
-                          maxLength={isPhoneNumberField ? 10 : undefined}
                           className="h-10"
                         />
                       </div>
