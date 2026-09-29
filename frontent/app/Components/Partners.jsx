@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/input-group";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "../hooks/useDebounce";
+import { resolveImageUrl, handleImageError } from "../utils/imageUtils";
 
 const Partners = () => {
   const dispatch = useDispatch();
@@ -132,18 +133,9 @@ const Partners = () => {
               /> */}
 
               <img
-                src={
-                  profile.image
-                    ? profile.image === "null"
-                      ? profile.gender === "Female"
-                        ? "/default-girl.jpg"
-                        : "/default-boy.jpg"
-                      : `${profile.image}`
-                    : profile.gender === "Female"
-                    ? "/default-girl.jpg"
-                    : "/default-boy.jpg"
-                }
+                src={resolveImageUrl(profile.image, profile.gender)}
                 alt={profile.pname}
+                onError={(e) => handleImageError(e, profile.gender)}
                 className="h-[200px] w-full md:h-[250px] lg:h-[220px] p-2 rounded-md object-contain mb-4 border-4 border-gray-100 shadow-sm"
               />
 

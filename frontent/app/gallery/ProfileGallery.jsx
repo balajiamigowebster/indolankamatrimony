@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { resolveImageUrl, handleImageError } from "../utils/imageUtils";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL_PRODUCTION;
 
@@ -427,20 +428,10 @@ const ProfileGallery = () => {
             {/* Image Section */}
             <div className="h-64 w-full mb-4">
               <img
-                src={
-                  profile.image
-                    ? profile.image === "null"
-                      ? profile.gender === "Female"
-                        ? "/default-girl.jpg"
-                        : "/default-boy.jpg"
-                      : `${profile.image}`
-                    : profile.gender === "Female"
-                    ? "/default-girl.jpg"
-                    : "/default-boy.jpg"
-                }
+                src={resolveImageUrl(profile.image, profile.gender)}
                 alt={profile.pname}
-                //className="h-full w-full rounded-md object-contain py-1 border-4 border-gray-100 shadow-sm"
-                className="h-full w-full  object-contain rounded-md py-1 shadow-sm border-gray-100/15 "
+                onError={(e) => handleImageError(e, profile.gender)}
+                className="h-full w-full object-contain rounded-md py-1 shadow-sm border-gray-100/15"
               />
             </div>
 

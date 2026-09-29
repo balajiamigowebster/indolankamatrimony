@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { LuZoomIn } from "react-icons/lu";
 import { LuZoomOut } from "react-icons/lu";
+import { resolveImageUrl, handleImageError } from "../../utils/imageUtils";
 
 // ----------------------------------------------------
 // Dummy Data for Filter Options
@@ -317,21 +318,34 @@ const AllProfiles = () => {
       key: "image",
       header: "Profile Image",
       widthClass: "min-w-[100px]",
-      render: (profile) => (
-        <td key="image" className="px-4 py-3 text-sm text-gray-500">
-          {(profile.image && profile.image === "null") || !profile.image ? (
-            "N/A"
-          ) : (
-            // கவனிக்க: profile.name-க்கு பதிலாக profile.pname உபயோகிக்கப்பட்டுள்ளது.
-            <img
-              src={profile.image}
-              alt={profile.pname || "Profile Image"}
-              onClick={() => handleImageClick(profile.image, profile.pname)}
-              className="h-10 w-10 rounded-md cursor-pointer hover:shadow-lg transition duration-200"
-            />
-          )}
-        </td>
-      ),
+      render: (profile) => {
+        const resolvedSrc = resolveImageUrl(profile.image, profile.gender);
+        const hasNoImage =
+          !profile.image ||
+          profile.image === "null" ||
+          profile.image === "N/A" ||
+          profile.image.trim() === "";
+
+        return (
+          <td key="image" className="px-4 py-3 text-sm text-gray-500">
+            {hasNoImage ? (
+              <img
+                src={resolvedSrc}
+                alt={profile.pname || "Default Avatar"}
+                className="h-10 w-10 rounded-md object-cover opacity-60"
+              />
+            ) : (
+              <img
+                src={resolvedSrc}
+                alt={profile.pname || "Profile Image"}
+                onError={(e) => handleImageError(e, profile.gender)}
+                onClick={() => handleImageClick(resolvedSrc, profile.pname)}
+                className="h-10 w-10 rounded-md cursor-pointer hover:shadow-lg transition duration-200 object-cover"
+              />
+            )}
+          </td>
+        );
+      },
     },
 
     // Actions-க்கான Custom Render Function உள்ள Header

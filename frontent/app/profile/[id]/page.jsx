@@ -756,7 +756,14 @@ const MatchDrawerContent = ({
                 <img
                   src={formatImageUrl(p.image, p.gender)}
                   alt={p.name || "Profile"}
-                  className="h-[150px] md:h-[300] md:w-[280px] w-[120px]"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      p.gender === "Female"
+                        ? "/default-girl.jpg"
+                        : "/default-boy.jpg";
+                  }}
+                  className="h-[150px] md:h-[300] md:w-[280px] w-[120px] object-cover"
                 />
               </div>
 
@@ -999,24 +1006,32 @@ const page = () => {
     { label: "Residence Place", value: formatValue(p.rplace) },
   ];
   const formatImageUrl = (imagePath, gender) => {
-    // console.log(gender);
-    // console.log(typeof imagePath, imagePath);
-    // If imagePath is missing, "null" (string), or empty, use default gender-based image
-    if (!imagePath || imagePath === "null" || imagePath.trim() === "") {
+    if (
+      !imagePath ||
+      imagePath === "null" ||
+      imagePath === "N/A" ||
+      typeof imagePath !== "string" ||
+      imagePath.trim() === ""
+    ) {
       return gender === "Female" ? "/default-girl.jpg" : "/default-boy.jpg";
     }
 
-    // Otherwise, return actual backend image URL
+    const trimmed = imagePath.trim();
+    if (trimmed.includes("/uploads/")) {
+      const filename = trimmed.split("/uploads/").pop();
+      return `https://amigowebster.in/indolankamatrimony_working/uploads/${filename}`;
+    }
 
-    return imagePath;
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+      return trimmed;
+    }
+
+    if (trimmed.startsWith("/")) {
+      return trimmed;
+    }
+
+    return gender === "Female" ? "/default-girl.jpg" : "/default-boy.jpg";
   };
-
-  // const imageSource =
-  //   p.image && p.image !== "null"
-  //     ? p.image // Actual remote URL (string)
-  //     : p.gender === "Female"
-  //     ? "default-girl.jpg"
-  //     : "default-boy.jpg";
 
   return (
     <div className="bg-gradient-to-r from-amber-20/50 to-amber-100/30 pb-10 pt-20  lg:pt-36 ">
@@ -1028,14 +1043,14 @@ const page = () => {
               <img
                 src={formatImageUrl(p.image, p.gender)}
                 alt={p.name || "Profile Picture"}
-                //style={{ objectFit: "cover" }}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src =
+                    p.gender === "Female"
+                      ? "/default-girl.jpg"
+                      : "/default-boy.jpg";
+                }}
                 className="w-full h-[500px] md:h-[300px] object-contain object-top rounded-lg border-2 border-[#4a2f1c] "
-                //className="rounded-lg border-2 border-[#4a2f1c]"
-                // sizes="(max-width: 768px) 100vw, 33vw"
-                //width={50}
-                //height={50}
-                //priority={true}
-                //placeholder="blur"
               />
             </div>
             <div>

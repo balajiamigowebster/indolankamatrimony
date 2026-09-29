@@ -3,6 +3,22 @@ const Profile = require("../models/profile");
 const cloudinary = require("cloudinary").v2; // Image delete panna Cloudinary venum
 const fs = require("fs");
 
+const normalizeProfileImageUrl = (imagePath) => {
+  if (
+    !imagePath ||
+    imagePath === "null" ||
+    imagePath === "N/A" ||
+    typeof imagePath !== "string"
+  )
+    return imagePath;
+  const trimmed = imagePath.trim();
+  if (trimmed.includes("/uploads/") && !trimmed.startsWith("http")) {
+    const filename = trimmed.split("/uploads/").pop();
+    return `https://amigowebster.in/indolankamatrimony_working/uploads/${filename}`;
+  }
+  return trimmed;
+};
+
 // =========================================================
 // API 1: getAllProfiles - Ellā profiles-um fetch panna
 // =========================================================
@@ -254,11 +270,17 @@ exports.getAllAdminProfiles = async (req, res) => {
     }
 
     // 7️⃣ Success response
+    const sanitizedProfiles = profiles.map((p) => {
+      const pData = p.toJSON ? p.toJSON() : { ...p };
+      pData.image = normalizeProfileImageUrl(pData.image);
+      return pData;
+    });
+
     res.status(200).json({
       success: true,
       message: "Profiles fetched successfully for Admin Panel ✅",
-      count: profiles.length,
-      data: profiles,
+      count: sanitizedProfiles.length,
+      data: sanitizedProfiles,
     });
   } catch (error) {
     console.error("❌ Admin GetAllProfiles Error:", error);
@@ -287,10 +309,13 @@ exports.getProfileById = async (req, res) => {
       });
     }
 
+    const pData = profile.toJSON ? profile.toJSON() : { ...profile };
+    pData.image = normalizeProfileImageUrl(pData.image);
+
     res.status(200).json({
       success: true,
       message: `Profile ID ${id} fetched successfully ✅`,
-      data: profile,
+      data: pData,
     });
   } catch (error) {
     console.error("❌ Admin GetProfileById Error:", error);

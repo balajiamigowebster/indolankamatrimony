@@ -2,6 +2,71 @@ const Profile = require("../models/profile");
 const { Op, Sequelize } = require("sequelize");
 const nodemailer = require("nodemailer");
 const OtpTemp = require("../models/otptemp");
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const processUploadedImage = async (file, req) => {
+  if (!file) return { image: null, imagePublicId: null };
+
+  let uploadedToCloudinary = false;
+  let image = null;
+  let imagePublicId = null;
+
+  try {
+    const cloudRes = await cloudinary.uploader.upload(file.path, {
+      folder: "IndolankaMatrimonyProfiles",
+    });
+    image = cloudRes.secure_url;
+    imagePublicId = cloudRes.public_id;
+    uploadedToCloudinary = true;
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+  } catch (cloudErr) {
+    console.warn(
+      "Cloudinary upload failed, falling back to local server storage:",
+      cloudErr.message
+    );
+  }
+
+  if (!uploadedToCloudinary) {
+    const host = req.get("host") || "amigowebster.in";
+    const protocol =
+      req.protocol === "https" || req.headers["x-forwarded-proto"] === "https"
+        ? "https"
+        : "http";
+    const subpath =
+      req.originalUrl && req.originalUrl.includes("indolankamatrimony_working")
+        ? "/indolankamatrimony_working"
+        : "";
+    image = `${protocol}://${host}${subpath}/uploads/${file.filename}`;
+    imagePublicId = null;
+  }
+
+  return { image, imagePublicId };
+};
+
+const normalizeProfileImageUrl = (imagePath) => {
+  if (
+    !imagePath ||
+    imagePath === "null" ||
+    imagePath === "N/A" ||
+    typeof imagePath !== "string"
+  )
+    return imagePath;
+  const trimmed = imagePath.trim();
+  if (trimmed.includes("/uploads/") && !trimmed.startsWith("http")) {
+    const filename = trimmed.split("/uploads/").pop();
+    return `https://amigowebster.in/indolankamatrimony_working/uploads/${filename}`;
+  }
+  return trimmed;
+};
 
 // exports.getAllProfiles = async (req, res) => {
 //   try {
@@ -43,17 +108,9 @@ exports.registerProfile = async (req, res) => {
   //console.log(req.file);
   console.log(req.body);
   try {
-    // multer upload file path
-    // const imagePath = req.file ? req.file.path : null;
-
-    // ✅ Cloudinary-la ulla image data extract pannanum
-    const imagePath = req.file ? req.file.path : null; // Full Cloudinary URL
-    const publicId = req.file ? req.file.filename : null; // Unique ID for management
-
-    //console.log(publicId);
-
-    console.log(imagePath);
-    console.log(req.body);
+    // Process image: Cloudinary first, local server storage fallback
+    const { image: imagePath, imagePublicId: publicId } =
+      await processUploadedImage(req.file, req);
 
     let {
       mprofile,
@@ -457,9 +514,9 @@ const sendRegistrationEmails = async ({ newProfile, email, pname, mprofile, phon
 exports.sendOtp = async (req, res) => {
   //console.log("SERVER OTP START");
   try {
-    // Image and Profile Data extraction
-    const imagePath = req.file ? req.file.path : null;
-    const publicId = req.file ? req.file.path : null;
+    // Process image: Cloudinary first, local server storage fallback
+    const { image: imagePath, imagePublicId: publicId } =
+      await processUploadedImage(req.file, req);
 
     let profileData = req.body;
     //console.log(profileData);
@@ -993,11 +1050,17 @@ exports.getAllProfiles = async (req, res) => {
       });
     }
 
+    const sanitizedProfiles = profiles.map((p) => {
+      const pData = p.toJSON ? p.toJSON() : { ...p };
+      pData.image = normalizeProfileImageUrl(pData.image);
+      return pData;
+    });
+
     res.status(200).json({
       success: true,
       message: "Profiles fetched successfully ✅",
-      count: profiles.length,
-      data: profiles,
+      count: sanitizedProfiles.length,
+      data: sanitizedProfiles,
     });
   } catch (error) {
     console.error(error);
@@ -1106,10 +1169,13 @@ exports.getProfileById = async (req, res) => {
       });
     }
 
+    const pData = profile.toJSON ? profile.toJSON() : { ...profile };
+    pData.image = normalizeProfileImageUrl(pData.image);
+
     res.status(200).json({
       success: true,
       message: "Profile details fetched successfully ✅",
-      data: profile,
+      data: pData,
     });
   } catch (error) {
     console.error("❌ Error fetching profile by ID:", error);
@@ -1298,10 +1364,16 @@ exports.searchMatches = async (req, res) => {
       });
     }
 
+    const sanitizedProfiles = profiles.map((p) => {
+      const pData = p.toJSON ? p.toJSON() : { ...p };
+      pData.image = normalizeProfileImageUrl(pData.image);
+      return pData;
+    });
+
     res.status(200).json({
       success: true,
-      count: profiles.length,
-      data: profiles,
+      count: sanitizedProfiles.length,
+      data: sanitizedProfiles,
     });
   } catch (error) {
     console.error(error);

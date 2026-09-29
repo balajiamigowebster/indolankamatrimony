@@ -606,7 +606,11 @@ const EditProfilePage = () => {
       }
 
       // Profile image
-      const existingImg = singleProfile.image || singleProfile.profileImage;
+      let existingImg = singleProfile.image || singleProfile.profileImage;
+      if (existingImg && existingImg.includes("/uploads/")) {
+        const filename = existingImg.split("/uploads/").pop();
+        existingImg = `https://amigowebster.in/indolankamatrimony_working/uploads/${filename}`;
+      }
       if (existingImg && existingImg !== "N/A" && existingImg !== "null") {
         setPreviewImage(existingImg);
       } else {
