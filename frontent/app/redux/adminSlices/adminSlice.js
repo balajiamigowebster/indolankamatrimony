@@ -80,21 +80,18 @@ export const adminUpdateProfile = createAsyncThunk(
   "admin/updateProfile",
   async ({ id, updateData }, { rejectWithValue }) => {
     try {
-      // Form-Data anuppurathala, headers-a specify pannanum
-
-      const res = await API.put(`/admin/profiles/${id}`, updateData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      // Backend response structure: { data: updatedProfile }
-      console.log(res.data);
+      const res = await API.put(`/admin/profiles/${id}`, updateData);
       return res.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || { message: "Failed to update profile" }
-      );
+      const message =
+        error.response?.data?.message ||
+        (typeof error.response?.data === "string" &&
+        !error.response.data.includes("<!DOCTYPE")
+          ? error.response.data
+          : null) ||
+        error.message ||
+        "Failed to update profile";
+      return rejectWithValue({ message });
     }
   }
 );

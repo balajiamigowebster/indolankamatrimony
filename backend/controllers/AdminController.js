@@ -479,21 +479,13 @@ exports.updateProfile = async (req, res) => {
     }
 
     // Update the profile in the database
-    const [updatedRowsCount] = await Profile.update(updateData, {
+    await Profile.update(updateData, {
       where: {
         id,
       },
     });
 
-    if (updatedRowsCount === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Update failed or no changes were made.",
-      });
-    }
-
     // Updated profile-a eduthu anuppunga
-
     const updatedProfile = await Profile.findByPk(id);
 
     // ⚠️ Response-la array-va varuratha thadukka (if needed - Option 2 from last response)

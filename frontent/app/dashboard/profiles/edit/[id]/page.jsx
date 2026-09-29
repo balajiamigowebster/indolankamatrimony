@@ -715,7 +715,9 @@ const EditProfilePage = () => {
       } else {
         const errorPayload = resultAction.payload;
         const errorMessage =
-          errorPayload?.message || "An unknown error occurred.";
+          errorPayload?.message ||
+          (typeof errorPayload === "string" ? errorPayload : null) ||
+          "An unknown error occurred.";
         toast.error(errorMessage);
       }
     } catch (err) {

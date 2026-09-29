@@ -73,6 +73,15 @@ mountRoutes("/indolankamatrimony_working");
 mountRoutes("/indolankamatrimony.com_v2");
 mountRoutes("/indolanka_v2");
 
+// Global error handling middleware to ensure JSON response instead of HTML 500
+app.use((err, req, res, next) => {
+  console.error("❌ Global Server Error:", err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "An internal server error occurred",
+  });
+});
+
 // only Cpanel hosting purpose using steps
 
 const PORT = process.env.PORT;
