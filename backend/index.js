@@ -49,6 +49,18 @@ app.use(cookieParser());
 
 // static folder -> frontend access for uploaded images
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/indolankamatrimony_working/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
+app.use(
+  "/indolankamatrimony.com_v2/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
+app.use(
+  "/indolanka_v2/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
 (async () => {
   try {
     await sequelize.authenticate();

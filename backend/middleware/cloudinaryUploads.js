@@ -1,7 +1,7 @@
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("cloudinary").v2;
 const path = require("path");
+const fs = require("fs");
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -9,16 +9,20 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ✅ Cloudinary Storage Setup
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "IndolankaMatrimonyProfiles", // Cloudinary folder name
-    // Dynamic Public ID: (Folder Name + file.fieldname + Date)
-    public_id: (req, file) => file.fieldname + "-" + Date.now(),
-    // Keep original format or convert to optimize storage
-    format: async (req, file) =>
-      path.extname(file.originalname).substring(1) || "jpg",
+const uploadsDir = path.join(__dirname, "..", "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// ✅ Disk Storage for safe local capture before optional Cloudinary upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "image-" + uniqueSuffix + ext);
   },
 });
 
@@ -28,13 +32,12 @@ const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
   const mimetype = allowedTypes.test(file.mimetype);
 
-  if (mimetype && allowedTypes.test(ext)) {
+  if (mimetype || allowedTypes.test(ext)) {
     cb(null, true);
   } else {
-    // Note: Multer will catch this error message
     cb(
       new Error(
-        "Only JPEG, JPG, PNG, GIF, WEBP OR AVIF  image files are allowed! ❌"
+        "Only JPEG, JPG, PNG, GIF, WEBP OR AVIF image files are allowed! ❌"
       )
     );
   }

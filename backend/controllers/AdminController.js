@@ -1,6 +1,7 @@
 const { Op } = require("sequelize");
 const Profile = require("../models/profile");
 const cloudinary = require("cloudinary").v2; // Image delete panna Cloudinary venum
+const fs = require("fs");
 
 // =========================================================
 // API 1: getAllProfiles - Ellā profiles-um fetch panna
@@ -452,19 +453,47 @@ exports.updateProfile = async (req, res) => {
     if (req.file) {
       // 1. Old Image Deletion
       const oldPublicId = profile.imagePublicId;
-      // The variable name in your original code was incorrect: `if (imagePublicId)` should be `if (oldPublicId)`
       if (oldPublicId) {
-        await cloudinary.uploader.destroy(oldPublicId).catch((err) => {
-          console.error(
-            "Old Cloudinary image deletion failed during update:",
-            err
-          );
-        });
+        try {
+          await cloudinary.uploader.destroy(oldPublicId);
+        } catch (err) {
+          console.warn("Old Cloudinary image deletion failed:", err.message);
+        }
       }
 
-      // 2. New image details from Multer/Cloudinary middleware
-      updateData.image = req.file.path;
-      updateData.imagePublicId = req.file.filename;
+      // 2. Try uploading to Cloudinary
+      let uploadedToCloudinary = false;
+      try {
+        const cloudRes = await cloudinary.uploader.upload(req.file.path, {
+          folder: "IndolankaMatrimonyProfiles",
+        });
+        updateData.image = cloudRes.secure_url;
+        updateData.imagePublicId = cloudRes.public_id;
+        uploadedToCloudinary = true;
+        // Clean up temporary local file
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+      } catch (cloudErr) {
+        console.warn(
+          "⚠️ Cloudinary upload failed (e.g. invalid credentials), falling back to server local storage:",
+          cloudErr.message
+        );
+      }
+
+      // 3. Fallback to local uploads storage if Cloudinary upload failed
+      if (!uploadedToCloudinary) {
+        const host = req.get("host") || "amigowebster.in";
+        const protocol =
+          req.protocol === "https" || req.headers["x-forwarded-proto"] === "https"
+            ? "https"
+            : "http";
+        const subpath = req.originalUrl && req.originalUrl.includes("indolankamatrimony_working")
+          ? "/indolankamatrimony_working"
+          : "";
+        updateData.image = `${protocol}://${host}${subpath}/uploads/${req.file.filename}`;
+        updateData.imagePublicId = null;
+      }
     } else if (updateData.image === "N/A") {
       // Front-end-ல image-ஐ நீக்கியிருந்தால் ('N/A' என body-ல் அனுப்பினால்)
       const oldPublicId = profile.imagePublicId;
