@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const ageOptions = Array.from({ length: 33 }, (_, i) => 18 + i);
+const ageOptions = Array.from({ length: 43 }, (_, i) => 18 + i); // 18 to 60
 const heightCmOptions = Array.from({ length: 122 }, (_, i) => 100 + i); // 100cm to 220cm (121 options)
 
 const heightOptions = [
@@ -312,7 +312,7 @@ const extractCmValue = (heightString) => {
 // முதல் மற்றும் கடைசி CM மதிப்புகளைப் பிரித்தெடுத்தல்
 const initial_height_from_cm = extractCmValue(heightOptions[0]); // "137"
 const initial_height_to_cm = extractCmValue(
-  heightOptions[heightOptions.length - 1],
+  heightOptions[heightOptions.length - 1]
 ); // "213"
 // அல்லது நீங்கள் விரும்பும் வேறு ஒரு value: e.g., "205"
 
@@ -486,7 +486,7 @@ const FilterForm = ({ filters, setFilters, handleSearch, loading }) => {
                     };
                   })
                   .filter(
-                    (h) => h && h.numericValue >= Number(filters.height_from),
+                    (h) => h && h.numericValue >= Number(filters.height_from)
                   ) // 'From' விட குறைவாக உள்ளதை நீக்குகிறோம்
                   .map((h) => (
                     <SelectItem
@@ -756,14 +756,7 @@ const MatchDrawerContent = ({
                 <img
                   src={formatImageUrl(p.image, p.gender)}
                   alt={p.name || "Profile"}
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src =
-                      p.gender === "Female"
-                        ? "/default-girl.jpg"
-                        : "/default-boy.jpg";
-                  }}
-                  className="h-[150px] md:h-[300] md:w-[280px] w-[120px] object-cover"
+                  className="h-[150px] md:h-[300] md:w-[280px] w-[120px]"
                 />
               </div>
 
@@ -858,7 +851,7 @@ const page = () => {
       Object.entries(filters).map(([key, value]) => [
         key,
         value === "all" ? "" : value, // Backend-ku empty string-a anuppuvom
-      ]),
+      ])
     );
 
     // 2. 🛑 NEW LOGIC: If profile_id is present, remove all other filters
@@ -1006,32 +999,24 @@ const page = () => {
     { label: "Residence Place", value: formatValue(p.rplace) },
   ];
   const formatImageUrl = (imagePath, gender) => {
-    if (
-      !imagePath ||
-      imagePath === "null" ||
-      imagePath === "N/A" ||
-      typeof imagePath !== "string" ||
-      imagePath.trim() === ""
-    ) {
+    // console.log(gender);
+    // console.log(typeof imagePath, imagePath);
+    // If imagePath is missing, "null" (string), or empty, use default gender-based image
+    if (!imagePath || imagePath === "null" || imagePath.trim() === "") {
       return gender === "Female" ? "/default-girl.jpg" : "/default-boy.jpg";
     }
 
-    const trimmed = imagePath.trim();
-    if (trimmed.includes("/uploads/")) {
-      const filename = trimmed.split("/uploads/").pop();
-      return `https://amigowebster.in/indolankamatrimony_working/uploads/${filename}`;
-    }
+    // Otherwise, return actual backend image URL
 
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-      return trimmed;
-    }
-
-    if (trimmed.startsWith("/")) {
-      return trimmed;
-    }
-
-    return gender === "Female" ? "/default-girl.jpg" : "/default-boy.jpg";
+    return imagePath;
   };
+
+  // const imageSource =
+  //   p.image && p.image !== "null"
+  //     ? p.image // Actual remote URL (string)
+  //     : p.gender === "Female"
+  //     ? "default-girl.jpg"
+  //     : "default-boy.jpg";
 
   return (
     <div className="bg-gradient-to-r from-amber-20/50 to-amber-100/30 pb-10 pt-20  lg:pt-36 ">
@@ -1043,14 +1028,14 @@ const page = () => {
               <img
                 src={formatImageUrl(p.image, p.gender)}
                 alt={p.name || "Profile Picture"}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src =
-                    p.gender === "Female"
-                      ? "/default-girl.jpg"
-                      : "/default-boy.jpg";
-                }}
+                //style={{ objectFit: "cover" }}
                 className="w-full h-[500px] md:h-[300px] object-contain object-top rounded-lg border-2 border-[#4a2f1c] "
+                //className="rounded-lg border-2 border-[#4a2f1c]"
+                // sizes="(max-width: 768px) 100vw, 33vw"
+                //width={50}
+                //height={50}
+                //priority={true}
+                //placeholder="blur"
               />
             </div>
             <div>
@@ -1093,6 +1078,73 @@ const page = () => {
                 direction="bottom"
                 className="w-full"
               >
+                {/* Loading State */}
+                {/* {loading && (
+                  <div className="flex justify-center items-center h-48 p-6 border rounded-lg bg-white shadow-md">
+                    <Loader2 className="animate-spin h-6 w-6 text-[#4a2f1c]" /> 
+                    <span className="ml-2 text-lg text-gray-700">
+                      Searching for Matches...
+                    </span>
+                  </div>
+                )} */}
+                {/* Results and No Match State (Loading mudinjadhukku apuram mattum) */}
+                {/* {!loading && (
+                  <>
+                    <h2 className="text-2xl py-5 text-start font-bold mb-4 text-[#4a2f1c]">
+                      Found **{matchProfiles.length}** Matching Profiles
+                    </h2>
+
+                    {matchProfiles.length === 0 ? (
+                     
+                      <div className="p-6 text-center border mb-10 rounded-lg bg-white shadow-md">
+                        <h3 className="text-xl font-semibold text-red-500">
+                          No Matching Profiles Found 😟
+                        </h3>
+                        <p className="mt-2 text-gray-600">
+                          try modifying your search filters to get better
+                          results.
+                        </p>
+                      </div>
+                    ) : (
+                    
+                      <div className="bg-white mb-10 p-4 mx-5 rounded-lg shadow-md overflow-x-auto">
+                        <div className="flex space-x-4 pb-2">
+                          {matchProfiles.map((p) => (
+                            <div
+                              key={p.id}
+                              onClick={() => router.push(`/profile/${p.id}`)}
+                              className="w-64 flex-shrink-0 border rounded-lg p-3 shadow-sm hover:shadow-md transition duration-200 cursor-pointer bg-white"
+                            >
+                             
+                              <div>
+                                <img
+                                  src={formatImageUrl(p.image, p.gender)}
+                                  alt={p.name || "Profile"}
+                                  className="h-[150px] md:h-[250] md:w-[180px] w-[120px]"
+                                />
+                              </div>
+                           
+                              <div className="space-y-1 text-sm">
+                                <div className="font-bold text-base text-[#4a2f1c] truncate">
+                                  {p.pname || "N/A"}
+                                </div>
+                                <div className="text-xs text-[#4a2f1c] font-semibold">
+                                  ID: {p.id || "N/A"}
+                                </div>
+                                <hr className="my-1 border-gray-100" />
+                                <div className="flex justify-start text-[#4a2f1c]">
+                                  <span className="font-medium">Age:</span>
+                                  <span className="px-1">{p.age || "N/A"}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )} */}
+
                 <DrawerContent className="h-[90vh] fixed bottom-0 left-0 right-0 max-w-6xl mx-auto rounded-t-[10px] flex flex-col">
                   <DrawerHeader className="relative border-b pb-2">
                     <DrawerTitle className="text-[#4a2f1c]">
@@ -1199,6 +1251,63 @@ const page = () => {
                   </span>
                 </div>
               )}
+              {/* Results and No Match State (Loading mudinjadhukku apuram mattum) */}
+              {/* {!loading && (
+                  <>
+                    <h2 className="text-2xl py-5 text-start font-bold mb-4 text-[#4a2f1c]">
+                      Found **{matchProfiles.length}** Matching Profiles
+                    </h2>
+
+                    {matchProfiles.length === 0 ? (
+                     
+                      <div className="p-6 text-center border mb-10 rounded-lg bg-white shadow-md">
+                        <h3 className="text-xl font-semibold text-red-500">
+                          No Matching Profiles Found 😟
+                        </h3>
+                        <p className="mt-2 text-gray-600">
+                          try modifying your search filters to get better
+                          results.
+                        </p>
+                      </div>
+                    ) : (
+                    
+                      <div className="bg-white mb-10 p-4 mx-5 rounded-lg shadow-md overflow-x-auto">
+                        <div className="flex space-x-4 pb-2">
+                          {matchProfiles.map((p) => (
+                            <div
+                              key={p.id}
+                              onClick={() => router.push(`/profile/${p.id}`)}
+                              className="w-64 flex-shrink-0 border rounded-lg p-3 shadow-sm hover:shadow-md transition duration-200 cursor-pointer bg-white"
+                            >
+                             
+                              <div>
+                                <img
+                                  src={formatImageUrl(p.image, p.gender)}
+                                  alt={p.name || "Profile"}
+                                  className="h-[150px] md:h-[250] md:w-[180px] w-[120px]"
+                                />
+                              </div>
+                           
+                              <div className="space-y-1 text-sm">
+                                <div className="font-bold text-base text-[#4a2f1c] truncate">
+                                  {p.pname || "N/A"}
+                                </div>
+                                <div className="text-xs text-[#4a2f1c] font-semibold">
+                                  ID: {p.id || "N/A"}
+                                </div>
+                                <hr className="my-1 border-gray-100" />
+                                <div className="flex justify-start text-[#4a2f1c]">
+                                  <span className="font-medium">Age:</span>
+                                  <span className="px-1">{p.age || "N/A"}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )} */}
 
               <DrawerContent className="h-[90vh] fixed bottom-0 left-0 right-0 max-w-6xl mx-auto rounded-t-[10px] flex flex-col">
                 <DrawerHeader className="relative border-b pb-2">

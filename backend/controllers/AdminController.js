@@ -444,6 +444,17 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
+    // ✅ Validate age limit (18 - 60 years)
+    if (updateData.age) {
+      const parsedAge = parseInt(updateData.age, 10);
+      if (isNaN(parsedAge) || parsedAge < 18 || parsedAge > 60) {
+        return res.status(400).json({
+          success: false,
+          message: "Age must be between 18 and 60 years for profile update.",
+        });
+      }
+    }
+
     // console.log(typeof updateData.education); // Debug purposes
     // console.log(updateData.education);        // Debug purposes
 

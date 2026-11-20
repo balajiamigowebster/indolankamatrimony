@@ -19,6 +19,10 @@ function Calendar({
   buttonVariant = "ghost",
   formatters,
   components,
+  fromYear = new Date().getFullYear() - 65,
+  toYear = new Date().getFullYear() - 18,
+  startMonth = new Date(new Date().getFullYear() - 65, 0),
+  endMonth = new Date(new Date().getFullYear() - 18, 11),
   ...props
 }) {
   const defaultClassNames = getDefaultClassNames()
@@ -26,6 +30,10 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      fromYear={fromYear}
+      toYear={toYear}
+      startMonth={startMonth}
+      endMonth={endMonth}
       className={cn(
         "bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,

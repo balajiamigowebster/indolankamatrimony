@@ -188,6 +188,17 @@ exports.registerProfile = async (req, res) => {
     //   });
     // }
 
+    // ✅ Validate age limit (18 - 60 years)
+    if (age) {
+      const parsedAge = parseInt(age, 10);
+      if (isNaN(parsedAge) || parsedAge < 18 || parsedAge > 60) {
+        return res.status(400).json({
+          success: false,
+          message: "Age must be between 18 and 60 years for registration.",
+        });
+      }
+    }
+
     // ✅ Create new profile (Step 1: Database Write)
 
     const newProfile = await Profile.create({
@@ -534,6 +545,17 @@ exports.sendOtp = async (req, res) => {
     // Handle array fields like 'education'
     if (Array.isArray(profileData.education)) {
       profileData.education = profileData.education.join(", ");
+    }
+
+    // ✅ Validate age limit (18 - 60 years)
+    if (profileData.age) {
+      const parsedAge = parseInt(profileData.age, 10);
+      if (isNaN(parsedAge) || parsedAge < 18 || parsedAge > 60) {
+        return res.status(400).json({
+          success: false,
+          message: "Age must be between 18 and 60 years for registration.",
+        });
+      }
     }
 
     // Add calculated fields to the profileData object
@@ -1324,7 +1346,7 @@ exports.searchMatches = async (req, res) => {
       if (
         age_from &&
         age_to &&
-        !(age_from === 18 && age_to === 50) // 🔥 IMPORTANT
+        !(age_from === 18 && age_to === 60) // 🔥 IMPORTANT
       ) {
         whereCondition.age = {
           [Op.between]: [age_from, age_to],
