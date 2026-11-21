@@ -29,6 +29,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
+import { resolveImageUrl, handleImageError } from "@/app/utils/imageUtils";
 
 const ageOptions = Array.from({ length: 43 }, (_, i) => 18 + i); // 18 to 60
 const heightCmOptions = Array.from({ length: 122 }, (_, i) => 100 + i); // 100cm to 220cm (121 options)
@@ -754,9 +755,10 @@ const MatchDrawerContent = ({
             >
               <div>
                 <img
-                  src={formatImageUrl(p.image, p.gender)}
-                  alt={p.name || "Profile"}
-                  className="h-[150px] md:h-[300] md:w-[280px] w-[120px]"
+                  src={resolveImageUrl(p.image, p.gender)}
+                  alt={p.pname || p.name || "Profile"}
+                  onError={(e) => handleImageError(e, p.gender)}
+                  className="h-[150px] md:h-[300] md:w-[280px] w-[120px] object-cover"
                 />
               </div>
 
@@ -900,7 +902,7 @@ const page = () => {
     const profileId = pathSegments[pathSegments.length - 1];
     //console.log(profileId);
     if (profiles.length > 0) {
-      const foundProfile = profiles.find((p) => p.id === profileId);
+      const foundProfile = profiles.find((p) => String(p.id) === String(profileId));
 
       if (foundProfile) {
         setProfileData(foundProfile);
@@ -999,24 +1001,8 @@ const page = () => {
     { label: "Residence Place", value: formatValue(p.rplace) },
   ];
   const formatImageUrl = (imagePath, gender) => {
-    // console.log(gender);
-    // console.log(typeof imagePath, imagePath);
-    // If imagePath is missing, "null" (string), or empty, use default gender-based image
-    if (!imagePath || imagePath === "null" || imagePath.trim() === "") {
-      return gender === "Female" ? "/default-girl.jpg" : "/default-boy.jpg";
-    }
-
-    // Otherwise, return actual backend image URL
-
-    return imagePath;
+    return resolveImageUrl(imagePath, gender);
   };
-
-  // const imageSource =
-  //   p.image && p.image !== "null"
-  //     ? p.image // Actual remote URL (string)
-  //     : p.gender === "Female"
-  //     ? "default-girl.jpg"
-  //     : "default-boy.jpg";
 
   return (
     <div className="bg-gradient-to-r from-amber-20/50 to-amber-100/30 pb-10 pt-20  lg:pt-36 ">
@@ -1026,16 +1012,10 @@ const page = () => {
           <div className="flex flex-col  md:items-start pb-6">
             <div className="w-full md:w-3/4 lg:w-full mb-4 md:mb-0 md:mr-6">
               <img
-                src={formatImageUrl(p.image, p.gender)}
-                alt={p.name || "Profile Picture"}
-                //style={{ objectFit: "cover" }}
+                src={resolveImageUrl(p.image, p.gender)}
+                alt={p.pname || p.name || "Profile Picture"}
+                onError={(e) => handleImageError(e, p.gender)}
                 className="w-full h-[500px] md:h-[300px] object-contain object-top rounded-lg border-2 border-[#4a2f1c] "
-                //className="rounded-lg border-2 border-[#4a2f1c]"
-                // sizes="(max-width: 768px) 100vw, 33vw"
-                //width={50}
-                //height={50}
-                //priority={true}
-                //placeholder="blur"
               />
             </div>
             <div>

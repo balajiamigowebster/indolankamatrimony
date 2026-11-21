@@ -10,10 +10,11 @@ export const resolveImageUrl = (imagePath, gender) => {
   }
 
   const trimmed = imagePath.trim();
+  const normalized = trimmed.replace(/\\/g, "/");
 
   // If it's a server disk or relative uploads path
-  if (trimmed.includes("/uploads/")) {
-    const filename = trimmed.split("/uploads/").pop();
+  if (normalized.includes("/uploads/") || normalized.startsWith("uploads/")) {
+    const filename = normalized.split("/uploads/").pop().replace(/^uploads\//, "");
     return `https://amigowebster.in/indolankamatrimony_working/uploads/${filename}`;
   }
 
