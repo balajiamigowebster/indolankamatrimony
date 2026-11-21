@@ -18,17 +18,19 @@ const {
 
 const router = express.Router();
 
-// Register profile
-// router.post("/register", upload.single("image"), registerProfile);
+const uploadProfileFields = cloudinaryUpload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "gallery", maxCount: 10 },
+]);
 
-router.post("/register", cloudinaryUpload.single("image"), registerProfile);
+// Register profile
+router.post("/register", uploadProfileFields, registerProfile);
 
 // // Get all profiles
 router.get("/all", getAllProfiles);
 
 // 1. Confirm Profile  with otp verification
-
-router.post("/send-otp", cloudinaryUpload.single("image"), sendOtp);
+router.post("/send-otp", uploadProfileFields, sendOtp);
 
 // 2. OTP confirm and Verification
 

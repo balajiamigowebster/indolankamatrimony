@@ -12,11 +12,31 @@ const normalizeProfileImageUrl = (imagePath) => {
   )
     return imagePath;
   const trimmed = imagePath.trim();
-  if (trimmed.includes("/uploads/") && !trimmed.startsWith("http")) {
-    const filename = trimmed.split("/uploads/").pop();
+  const normalized = trimmed.replace(/\\/g, "/");
+  if (normalized.includes("/uploads/") && !normalized.startsWith("http")) {
+    const filename = normalized.split("/uploads/").pop();
     return `https://amigowebster.in/indolankamatrimony_working/uploads/${filename}`;
   }
   return trimmed;
+};
+
+const normalizeGalleryUrls = (gallery) => {
+  if (!gallery) return [];
+  try {
+    const parsed = typeof gallery === "string" ? JSON.parse(gallery) : gallery;
+    if (Array.isArray(parsed)) {
+      return parsed.map(normalizeProfileImageUrl).filter(Boolean);
+    }
+    return [normalizeProfileImageUrl(parsed)].filter(Boolean);
+  } catch (e) {
+    if (typeof gallery === "string") {
+      return gallery
+        .split(",")
+        .map((s) => normalizeProfileImageUrl(s.trim()))
+        .filter(Boolean);
+    }
+    return [];
+  }
 };
 
 // =========================================================
@@ -273,6 +293,7 @@ exports.getAllAdminProfiles = async (req, res) => {
     const sanitizedProfiles = profiles.map((p) => {
       const pData = p.toJSON ? p.toJSON() : { ...p };
       pData.image = normalizeProfileImageUrl(pData.image);
+      pData.gallery = normalizeGalleryUrls(pData.gallery);
       return pData;
     });
 
@@ -311,6 +332,7 @@ exports.getProfileById = async (req, res) => {
 
     const pData = profile.toJSON ? profile.toJSON() : { ...profile };
     pData.image = normalizeProfileImageUrl(pData.image);
+    pData.gallery = normalizeGalleryUrls(pData.gallery);
 
     res.status(200).json({
       success: true,
@@ -541,6 +563,36 @@ exports.updateProfile = async (req, res) => {
 
       updateData.image = "N/A";
       updateData.imagePublicId = null;
+    }
+
+    if (req.files && req.files.gallery && req.files.gallery.length > 0) {
+      const galleryUrls = [];
+      for (const gFile of req.files.gallery) {
+        let gUploaded = false;
+        try {
+          const gCloud = await cloudinary.uploader.upload(gFile.path, {
+            folder: "IndolankaMatrimonyProfiles",
+          });
+          galleryUrls.push(gCloud.secure_url);
+          gUploaded = true;
+          if (fs.existsSync(gFile.path)) fs.unlinkSync(gFile.path);
+        } catch (e) {}
+        if (!gUploaded) {
+          const host = req.get("host") || "amigowebster.in";
+          const protocol =
+            req.protocol === "https" || req.headers["x-forwarded-proto"] === "https"
+              ? "https"
+              : "http";
+          const subpath =
+            req.originalUrl && req.originalUrl.includes("indolankamatrimony_working")
+              ? "/indolankamatrimony_working"
+              : "";
+          galleryUrls.push(`${protocol}://${host}${subpath}/uploads/${gFile.filename}`);
+        }
+      }
+      if (galleryUrls.length > 0) {
+        updateData.gallery = JSON.stringify(galleryUrls);
+      }
     }
 
     // Update the profile in the database

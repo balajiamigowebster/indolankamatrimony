@@ -155,6 +155,10 @@ const Profile = sequelize.define(
     image: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    gallery: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     }, // 🕒 Auto date fields
     created_day: {
       type: DataTypes.STRING(2),

@@ -803,6 +803,7 @@ const page = () => {
   const [hasSearched, setHasSearched] = useState(false);
   // 🚩 NEW STATE: Drawer-ஐ திறக்க/மூட இந்த State-ஐப் பயன்படுத்துகிறோம்.
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   //console.log(filters);
 
@@ -895,6 +896,7 @@ const page = () => {
   };
 
   useEffect(() => {
+    setSelectedImage(null);
     //  URL-la irundhu ID-a edukkanum
     const pathSegments = pathname.split("/");
     // console.log(pathname);
@@ -1004,6 +1006,34 @@ const page = () => {
     return resolveImageUrl(imagePath, gender);
   };
 
+  // Parse Gallery images
+  let galleryList = [];
+  if (Array.isArray(p.gallery)) {
+    galleryList = p.gallery;
+  } else if (typeof p.gallery === "string" && p.gallery.trim() !== "") {
+    try {
+      const parsed = JSON.parse(p.gallery);
+      galleryList = Array.isArray(parsed) ? parsed : [parsed];
+    } catch (e) {
+      galleryList = p.gallery.split(",").map((s) => s.trim());
+    }
+  }
+  galleryList = galleryList.filter(
+    (img) => img && img !== "null" && img !== "N/A" && typeof img === "string" && img.trim() !== ""
+  );
+
+  const allImages = [];
+  if (p.image && p.image !== "null" && p.image !== "N/A" && typeof p.image === "string" && p.image.trim() !== "") {
+    allImages.push(p.image);
+  }
+  galleryList.forEach((g) => {
+    if (!allImages.includes(g)) {
+      allImages.push(g);
+    }
+  });
+
+  const activeImage = selectedImage || (allImages.length > 0 ? allImages[0] : p.image);
+
   return (
     <div className="bg-gradient-to-r from-amber-20/50 to-amber-100/30 pb-10 pt-20  lg:pt-36 ">
       <div className="max-w-6xl mx-auto  px-4">
@@ -1012,11 +1042,41 @@ const page = () => {
           <div className="flex flex-col  md:items-start pb-6">
             <div className="w-full md:w-3/4 lg:w-full mb-4 md:mb-0 md:mr-6">
               <img
-                src={resolveImageUrl(p.image, p.gender)}
+                src={resolveImageUrl(activeImage, p.gender)}
                 alt={p.pname || p.name || "Profile Picture"}
                 onError={(e) => handleImageError(e, p.gender)}
-                className="w-full h-[500px] md:h-[300px] object-contain object-top rounded-lg border-2 border-[#4a2f1c] "
+                className="w-full h-[500px] md:h-[300px] object-contain object-top rounded-lg border-2 border-[#4a2f1c] bg-white/40"
               />
+
+              {galleryList.length > 0 && (
+                <div className="mt-3 w-full">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {allImages.map((imgUrl, idx) => {
+                      const resolved = resolveImageUrl(imgUrl, p.gender);
+                      const isSelected = activeImage === imgUrl;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedImage(imgUrl)}
+                          className={`relative rounded-md overflow-hidden border-2 transition-all duration-200 cursor-pointer ${
+                            isSelected
+                              ? "border-[#4a2f1c] ring-2 ring-amber-500 scale-105"
+                              : "border-neutral-300 hover:border-[#4a2f1c] opacity-80 hover:opacity-100"
+                          }`}
+                        >
+                          <img
+                            src={resolved}
+                            alt={`Gallery ${idx + 1}`}
+                            onError={(e) => handleImageError(e, p.gender)}
+                            className="w-16 h-16 md:w-20 md:h-20 object-cover"
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <h1 className="text-sm md:text-base pt-5  text-[#4a2f1c] mb-2">

@@ -1158,6 +1158,7 @@ const fieldOrder = [
   { label: "Address Details", name: "addressdetails", type: "textarea" },
   { label: "Phone Number", name: "phonenumber", type: "input" },
   { label: "Profile Image", name: "image", type: "file" },
+  { label: "Gallery Images", name: "gallery", type: "file", multiple: true },
 ];
 
 const calculateAge = (dob) => {
@@ -1274,6 +1275,7 @@ export default function RegisterProfile() {
   //console.log(formData);
 
   const [image, setImage] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
   const [dobDate, setDobDate] = useState(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -1326,6 +1328,18 @@ export default function RegisterProfile() {
       // No file selected (e.g., user cancels)
       setImage(null);
     }
+  };
+
+  const handleGalleryChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const invalidFiles = files.filter((f) => f.size > MAX_IMAGE_SIZE);
+    if (invalidFiles.length > 0) {
+      toast.error("Each gallery image must be less than 500KB.");
+      e.target.value = "";
+      setGalleryImages([]);
+      return;
+    }
+    setGalleryImages(files);
   };
 
   const handleSelectChange = (name, value) => {
@@ -1651,6 +1665,9 @@ export default function RegisterProfile() {
     }
 
     if (image) form.append("image", image);
+    if (galleryImages && galleryImages.length > 0) {
+      galleryImages.forEach((img) => form.append("gallery", img));
+    }
 
     const result = await dispatch(registerProfile(form));
     if (registerProfile.fulfilled.match(result)) {
@@ -1703,6 +1720,7 @@ export default function RegisterProfile() {
       });
       setDobDate(null);
       setImage(null);
+      setGalleryImages([]);
       setOtherInputs({
         education: false,
         occupation: false,
@@ -2022,6 +2040,7 @@ export default function RegisterProfile() {
             } // 4. FILE INPUT
 
             if (field.type === "file") {
+              const isGallery = field.name === "gallery";
               return (
                 <div key={field.name} className="flex flex-col">
                   <div className="lg:flex-row w-full lg:flex lg:center lg:gap-10">
@@ -2033,18 +2052,24 @@ export default function RegisterProfile() {
                       <Input
                         type="file"
                         accept="image/*"
-                        onChange={handleImageChange}
+                        multiple={isGallery}
+                        onChange={isGallery ? handleGalleryChange : handleImageChange}
                         className={`py-[8px] border-black rounded ${
-                          validation.image
+                          !isGallery && validation.image
                             ? "border-red-500 focus:border-red-500 focus-visible:ring-red-500"
                             : ""
                         }`}
                       />
+                      {isGallery && galleryImages.length > 0 && (
+                        <p className="text-xs text-neutral-600 mt-1">
+                          {galleryImages.length} image(s) selected
+                        </p>
+                      )}
                     </div>
                   </div>
                   {/* 🔴 NEW: Display Image Size Error Message */}
 
-                  {validation.image && (
+                  {!isGallery && validation.image && (
                     <p className="text-red-500 text-xs mt-1">
                       {validation.image}
                     </p>

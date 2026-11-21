@@ -1163,6 +1163,7 @@ const fieldOrder = [
   { label: "Address Details", name: "addressdetails", type: "textarea" },
   { label: "Phone Number", name: "phonenumber", type: "input" },
   { label: "Profile Image", name: "image", type: "file" },
+  { label: "Gallery Images", name: "gallery", type: "file", multiple: true },
 ];
 
 const calculateAge = (dob) => {
@@ -1429,6 +1430,7 @@ export default function SendOtpRegister() {
   });
 
   const [image, setImage] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
   const [dobDate, setDobDate] = useState(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -1481,6 +1483,7 @@ export default function SendOtpRegister() {
     if (file) {
       if (file.size > MAX_IMAGE_SIZE) {
         setImage(null);
+      setGalleryImages([]);
         setValidation((prev) => ({
           ...prev,
           image: "Image size must be less than 500KB.",
@@ -1492,7 +1495,20 @@ export default function SendOtpRegister() {
       }
     } else {
       setImage(null);
+      setGalleryImages([]);
     }
+  };
+
+  const handleGalleryChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const invalidFiles = files.filter((f) => f.size > MAX_IMAGE_SIZE);
+    if (invalidFiles.length > 0) {
+      toast.error("Each gallery image must be less than 500KB.");
+      e.target.value = "";
+      setGalleryImages([]);
+      return;
+    }
+    setGalleryImages(files);
   };
 
   const handleSelectChange = (name, value) => {
@@ -1824,6 +1840,9 @@ export default function SendOtpRegister() {
     }
 
     if (image) form.append("image", image);
+    if (galleryImages && galleryImages.length > 0) {
+      galleryImages.forEach((img) => form.append("gallery", img));
+    }
 
     // API Call: sendOtp Dispatch
     const result = await dispatch(sendOtp(form));
@@ -1941,6 +1960,7 @@ export default function SendOtpRegister() {
       //setFormData({});
       setDobDate(null);
       setImage(null);
+      setGalleryImages([]);
       setCurrentStep(1); // Reset to step 1
       setOtpVerification("");
       setResendTimer(0);
@@ -2376,6 +2396,7 @@ export default function SendOtpRegister() {
 
               // 4. FILE INPUT
               if (field.type === "file") {
+                const isGallery = field.name === "gallery";
                 return (
                   <div key={field.name} className="flex flex-col">
                     <div className="lg:flex-row w-full lg:flex lg:center lg:gap-10">
@@ -2386,12 +2407,18 @@ export default function SendOtpRegister() {
                         <Input
                           type="file"
                           accept="image/*"
-                          onChange={handleImageChange}
+                          multiple={isGallery}
+                          onChange={isGallery ? handleGalleryChange : handleImageChange}
                           className="border-black rounded"
                         />
+                        {isGallery && galleryImages.length > 0 && (
+                          <p className="text-xs text-neutral-600 mt-1">
+                            {galleryImages.length} image(s) selected
+                          </p>
+                        )}
                       </div>
                     </div>
-                    {validation.image && (
+                    {!isGallery && validation.image && (
                       <p className="text-red-500 text-xs mt-1 flex items-center">
                         <AlertCircle className="h-4 w-4 mr-1" />
                         {validation.image}

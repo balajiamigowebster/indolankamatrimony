@@ -10,7 +10,10 @@ const cloudinaryUpload = require("../middleware/cloudinaryUploads");
 const router = express.Router();
 
 const handleImageUpload = (req, res, next) => {
-  cloudinaryUpload.single("image")(req, res, (err) => {
+  cloudinaryUpload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "gallery", maxCount: 10 },
+  ])(req, res, (err) => {
     if (err) {
       console.error("❌ Profile image upload error:", err);
       return res.status(400).json({
@@ -22,6 +25,9 @@ const handleImageUpload = (req, res, next) => {
             ? "Image upload failed: Cloudinary API secret is invalid or mismatched. Please check CLOUDINARY_API_SECRET."
             : `Image upload failed: ${err.message || "Failed to process image"}`,
       });
+    }
+    if (req.files && req.files.image && req.files.image.length > 0) {
+      req.file = req.files.image[0];
     }
     next();
   });

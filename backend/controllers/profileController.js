@@ -61,11 +61,43 @@ const normalizeProfileImageUrl = (imagePath) => {
   )
     return imagePath;
   const trimmed = imagePath.trim();
-  if (trimmed.includes("/uploads/") && !trimmed.startsWith("http")) {
-    const filename = trimmed.split("/uploads/").pop();
+  const normalized = trimmed.replace(/\\/g, "/");
+  if (normalized.includes("/uploads/") && !normalized.startsWith("http")) {
+    const filename = normalized.split("/uploads/").pop();
     return `https://amigowebster.in/indolankamatrimony_working/uploads/${filename}`;
   }
   return trimmed;
+};
+
+const processMultipleImages = async (files, req) => {
+  if (!files || files.length === 0) return [];
+  const results = [];
+  for (const file of files) {
+    const res = await processUploadedImage(file, req);
+    if (res && res.image) {
+      results.push(res.image);
+    }
+  }
+  return results;
+};
+
+const normalizeGalleryUrls = (gallery) => {
+  if (!gallery) return [];
+  try {
+    const parsed = typeof gallery === "string" ? JSON.parse(gallery) : gallery;
+    if (Array.isArray(parsed)) {
+      return parsed.map(normalizeProfileImageUrl).filter(Boolean);
+    }
+    return [normalizeProfileImageUrl(parsed)].filter(Boolean);
+  } catch (e) {
+    if (typeof gallery === "string") {
+      return gallery
+        .split(",")
+        .map((s) => normalizeProfileImageUrl(s.trim()))
+        .filter(Boolean);
+    }
+    return [];
+  }
 };
 
 // exports.getAllProfiles = async (req, res) => {
@@ -108,9 +140,15 @@ exports.registerProfile = async (req, res) => {
   //console.log(req.file);
   console.log(req.body);
   try {
-    // Process image: Cloudinary first, local server storage fallback
+    // Process main profile image
+    const mainFile = req.file || (req.files && req.files.image ? req.files.image[0] : null);
     const { image: imagePath, imagePublicId: publicId } =
-      await processUploadedImage(req.file, req);
+      await processUploadedImage(mainFile, req);
+
+    // Process gallery images
+    const galleryFiles = req.files && req.files.gallery ? req.files.gallery : [];
+    const galleryUrls = await processMultipleImages(galleryFiles, req);
+    const galleryData = galleryUrls.length > 0 ? JSON.stringify(galleryUrls) : (req.body.gallery || null);
 
     let {
       mprofile,
@@ -239,6 +277,7 @@ exports.registerProfile = async (req, res) => {
       image: imagePath,
       // Cloudinary Public_id
       imagePublicId: publicId,
+      gallery: galleryData,
       created_day,
       created_month,
       created_year,
@@ -525,9 +564,15 @@ const sendRegistrationEmails = async ({ newProfile, email, pname, mprofile, phon
 exports.sendOtp = async (req, res) => {
   //console.log("SERVER OTP START");
   try {
-    // Process image: Cloudinary first, local server storage fallback
+    // Process main profile image
+    const mainFile = req.file || (req.files && req.files.image ? req.files.image[0] : null);
     const { image: imagePath, imagePublicId: publicId } =
-      await processUploadedImage(req.file, req);
+      await processUploadedImage(mainFile, req);
+
+    // Process gallery images
+    const galleryFiles = req.files && req.files.gallery ? req.files.gallery : [];
+    const galleryUrls = await processMultipleImages(galleryFiles, req);
+    const galleryData = galleryUrls.length > 0 ? JSON.stringify(galleryUrls) : (req.body.gallery || null);
 
     let profileData = req.body;
     //console.log(profileData);
@@ -576,6 +621,7 @@ exports.sendOtp = async (req, res) => {
     profileData.created_year = now.getFullYear().toString();
     profileData.image = imagePath;
     profileData.imagePublicId = publicId;
+    profileData.gallery = galleryData;
 
     // --- Check if email or phone number already exists in DB ---
 
@@ -842,6 +888,7 @@ exports.verifyOtpAndRegister = async (req, res) => {
       phonenumber: profileData.phonenumber,
       image: profileData.image || null,
       imagePublicId: profileData.imagePublicId || null,
+      gallery: profileData.gallery || null,
       created_day: profileData.created_day || new Date().getDate().toString().padStart(2, "0"),
       created_month: profileData.created_month || (new Date().getMonth() + 1).toString().padStart(2, "0"),
       created_year: profileData.created_year || new Date().getFullYear().toString(),
@@ -1075,6 +1122,7 @@ exports.getAllProfiles = async (req, res) => {
     const sanitizedProfiles = profiles.map((p) => {
       const pData = p.toJSON ? p.toJSON() : { ...p };
       pData.image = normalizeProfileImageUrl(pData.image);
+      pData.gallery = normalizeGalleryUrls(pData.gallery);
       return pData;
     });
 
@@ -1193,6 +1241,7 @@ exports.getProfileById = async (req, res) => {
 
     const pData = profile.toJSON ? profile.toJSON() : { ...profile };
     pData.image = normalizeProfileImageUrl(pData.image);
+    pData.gallery = normalizeGalleryUrls(pData.gallery);
 
     res.status(200).json({
       success: true,
@@ -1389,6 +1438,7 @@ exports.searchMatches = async (req, res) => {
     const sanitizedProfiles = profiles.map((p) => {
       const pData = p.toJSON ? p.toJSON() : { ...p };
       pData.image = normalizeProfileImageUrl(pData.image);
+      pData.gallery = normalizeGalleryUrls(pData.gallery);
       return pData;
     });
 
