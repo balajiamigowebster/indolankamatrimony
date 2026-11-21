@@ -26,6 +26,7 @@ import { resolveImageUrl, handleImageError } from "../utils/imageUtils";
 const Partners = () => {
   const dispatch = useDispatch();
   const { profiles, loading, error } = useSelector((state) => state.profile);
+  const profileList = Array.isArray(profiles) ? profiles : [];
   const router = useRouter();
 
   // 1. Search State
@@ -67,9 +68,9 @@ const Partners = () => {
   // 1. loading = true AND searchTerm காலியாக இல்லை (search API call நடக்கும்போது)
   const isSearchingAndLoading = loading && searchTerm.trim() !== "";
 
-  // 2. loading = true AND profiles.length = 0 AND searchTerm காலியாக உள்ளது (Initial Load நடக்கும்போது)
+  // 2. loading = true AND profileList.length = 0 AND searchTerm காலியாக உள்ளது (Initial Load நடக்கும்போது)
   const isInitialLoading =
-    loading && profiles.length === 0 && searchTerm.trim() === "";
+    loading && profileList.length === 0 && searchTerm.trim() === "";
 
   if (isSearchingAndLoading || isInitialLoading) {
     // Initial Load அல்லது Search Loading (Skeleton-ஐ காட்டவும்)
@@ -88,7 +89,7 @@ const Partners = () => {
         </div>
       </CarouselItem>
     ));
-  } else if (error && profiles.length === 0) {
+  } else if (error && profileList.length === 0) {
     // Error or Not Found
     content = (
       <div className="text-center w-full py-16 col-span-full">
@@ -100,7 +101,7 @@ const Partners = () => {
         </p>
       </div>
     );
-  } else if (profiles.length === 0 && !loading) {
+  } else if (profileList.length === 0 && !loading) {
     // No data found after search (error is null/cleared)
     content = (
       <div className="text-center w-full py-16 col-span-full">
@@ -111,7 +112,7 @@ const Partners = () => {
     );
   } else {
     // Data found (Profiles List)
-    content = profiles.map((profile) => (
+    content = profileList.map((profile) => (
       <CarouselItem key={profile.id} className="md:basis-1/2 lg:basis-1/4">
         <div className="p-3">
           <Card
@@ -209,7 +210,7 @@ const Partners = () => {
       </div>
 
       {/* Carousel or Error Message */}
-      {error && profiles.length === 0 ? (
+      {error && profileList.length === 0 ? (
         // Error Message display
         content
       ) : (
@@ -224,19 +225,19 @@ const Partners = () => {
           opts={{
             align: "start",
             // Loop only if there's enough profiles to loop, or disable loop
-            loop: profiles.length > 4 || true,
+            loop: profileList.length > 4 || true,
           }}
           className="w-full max-w-6xl mx-auto md:overflow-hidden lg:overflow-visible"
         >
           <CarouselContent
             // Skeleton-ஐ நடுவில் காட்ட வேண்டியதில்லை, data இல்லாவிட்டால் மட்டும் போதும்
-            className={profiles.length === 0 ? "justify-center" : ""}
+            className={profileList.length === 0 ? "justify-center" : ""}
           >
             {content}
           </CarouselContent>
 
           {/* Show navigation only if profiles are available and loading is complete */}
-          {profiles.length > 0 && !loading && (
+          {profileList.length > 0 && !loading && (
             <>
               <CarouselPrevious className="hidden md:flex" />
               <CarouselNext className="hidden md:flex" />

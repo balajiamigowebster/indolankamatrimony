@@ -903,7 +903,7 @@ const page = () => {
     // console.log(pathSegments);
     const profileId = pathSegments[pathSegments.length - 1];
     //console.log(profileId);
-    if (profiles.length > 0) {
+    if (Array.isArray(profiles) && profiles.length > 0) {
       const foundProfile = profiles.find((p) => String(p.id) === String(profileId));
 
       if (foundProfile) {

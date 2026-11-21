@@ -50,6 +50,7 @@ const updateStateAndSession = (key, value, setter) => {
 const ProfileGallery = () => {
   const dispatch = useDispatch();
   const { profiles, loading, error } = useSelector((state) => state.profile);
+  const profileList = Array.isArray(profiles) ? profiles : [];
   const router = useRouter();
 
   // ✅ State initialization: Session Storage-la irundhu value-ai load seigirōm.
@@ -402,7 +403,7 @@ const ProfileGallery = () => {
         <p className="text-gray-600">{error} - Please try again later.</p>
       </div>
     );
-  } else if (profiles.length === 0 && isInitialLoadComplete) {
+  } else if (profileList.length === 0 && isInitialLoadComplete) {
     // 3. ✅ FIX: No Profiles Found State
     // Initial load mudinjadhuku apuram, profiles zero-va irundha mattum kaatanum.
     content = (
@@ -417,7 +418,7 @@ const ProfileGallery = () => {
     );
   } else {
     // 4. Data Found State (Profile Cards)
-    content = profiles.map((profile) => (
+    content = profileList.map((profile) => (
       <div key={profile.id} className="">
         <Card
           className="shadow-md hover:shadow-xl cursor-pointer transition-all duration-300 border border-gray-200 rounded-lg h-full"

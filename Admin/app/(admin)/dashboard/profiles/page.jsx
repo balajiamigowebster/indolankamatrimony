@@ -42,6 +42,7 @@ const AllProfiles = () => {
   const { profiles, loading, error, profileCount, deleteSuccess } = useSelector(
     (state) => state.admin
   );
+  const profileList = Array.isArray(profiles) ? profiles : [];
 
   //console.log(profiles);
 
@@ -407,7 +408,7 @@ const AllProfiles = () => {
       {/* 🌟 Profiles Data Table - MAP செய்யப்பட்ட பகுதி */}
       {!loading && !error && (
         <div className="bg-white shadow rounded-lg w-full mt-6">
-          {profiles.length === 0 ? (
+          {profileList.length === 0 ? (
             <p className="p-4 text-center text-gray-500">
               No profiles found matching the criteria. 🔎
             </p>
@@ -434,7 +435,7 @@ const AllProfiles = () => {
                   </thead>
 
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {profiles.map((profile, index) => (
+                    {profileList.map((profile, index) => (
                       <tr key={profile.id} className="hover:bg-gray-50">
                         {/* TD-களை MAP செய்கிறோம் */}
                         {TABLE_HEADERS.map((col) => {

@@ -231,7 +231,7 @@ const profileSlice = createSlice({
       })
       .addCase(registerProfile.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message || "Registration failed";
       })
 
       // ------------------------------------
@@ -256,8 +256,8 @@ const profileSlice = createSlice({
       .addCase(sendOtp.rejected, (state, action) => {
         state.loading = false;
         state.otpSent = false;
-        state.error = action.payload.message;
-        state.otpError = action.payload.message; // OTP-Specific error
+        state.error = action.payload?.message || "Failed to send OTP";
+        state.otpError = action.payload?.message || "Failed to send OTP";
       })
 
       // ------------------------------------
@@ -273,14 +273,14 @@ const profileSlice = createSlice({
         state.loading = false;
         state.success = true;
         state.otpSent = false;
-        state.data = action.payload.data;
+        state.data = action.payload?.data || action.payload;
       })
 
       .addCase(verifyOtpAndRegister.rejected, (state, action) => {
         state.loading = false;
         state.success = false;
         // This is crucial: OTP sent state remains true so user can try again with a new OTP.
-        state.otpError = action.payload.message; // Invalid OTP, Expired etc.
+        state.otpError = action.payload?.message || "Verification failed";
       })
 
       // 🟦 Get All Profiles
@@ -290,12 +290,17 @@ const profileSlice = createSlice({
       })
       .addCase(getAllProfiles.fulfilled, (state, action) => {
         state.loading = false;
-        state.profiles = action.payload.data; // ✅ only profiles array
+        state.profiles = Array.isArray(action.payload?.data)
+          ? action.payload.data
+          : Array.isArray(action.payload)
+          ? action.payload
+          : [];
         state.success = true;
       })
       .addCase(getAllProfiles.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message || "Failed to load profiles";
+        state.profiles = [];
       })
       // 🟩 Get Single Profile by ID
       .addCase(getProfileById.pending, (state) => {
@@ -304,12 +309,12 @@ const profileSlice = createSlice({
       })
       .addCase(getProfileById.fulfilled, (state, action) => {
         state.loading = false;
-        state.data = action.payload.data; // ✅ single profile
+        state.data = action.payload?.data || action.payload;
         state.success = true;
       })
       .addCase(getProfileById.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message || "Failed to load profile";
       })
 
       // 🔍 Search Profiles
@@ -319,12 +324,16 @@ const profileSlice = createSlice({
       })
       .addCase(searchProfiles.fulfilled, (state, action) => {
         state.loading = false;
-        state.profiles = action.payload.data || [];
+        state.profiles = Array.isArray(action.payload?.data)
+          ? action.payload.data
+          : Array.isArray(action.payload)
+          ? action.payload
+          : [];
         state.success = true;
       })
       .addCase(searchProfiles.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload.message;
+        state.error = action.payload?.message || "Search failed";
         state.profiles = []; // clear on not found
       })
 
@@ -336,13 +345,17 @@ const profileSlice = createSlice({
       })
       .addCase(searchMatches.fulfilled, (state, action) => {
         state.loading = false;
-        state.matchProfiles = action.payload.data || [];
+        state.matchProfiles = Array.isArray(action.payload?.data)
+          ? action.payload.data
+          : Array.isArray(action.payload)
+          ? action.payload
+          : [];
         state.success = true;
       })
 
       .addCase(searchMatches.rejected, (state, action) => {
         state.loading = false;
-        state.matchErrors = action.payload.message;
+        state.matchErrors = action.payload?.message || "Match search failed";
         state.matchProfiles = [];
       });
   },
