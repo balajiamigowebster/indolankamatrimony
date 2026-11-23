@@ -1386,9 +1386,12 @@ exports.searchMatches = async (req, res) => {
       whereCondition.id = profile_id;
     } else {
       // ✅ GENDER
-      if (looking_for) {
-        whereCondition.gender =
-          looking_for.toLowerCase() === "bride" ? "Female" : "Male";
+      if (looking_for && looking_for.toLowerCase() !== "all") {
+        if (looking_for.toLowerCase() === "bride") {
+          whereCondition.gender = "Female";
+        } else if (looking_for.toLowerCase() === "groom") {
+          whereCondition.gender = "Male";
+        }
       }
 
       // ✅ AGE FILTER (ONLY IF NOT DEFAULT)
@@ -1418,9 +1421,9 @@ exports.searchMatches = async (req, res) => {
       }
 
       // ✅ OTHER FILTERS
-      if (caste) whereCondition.caste = caste;
-      if (religion) whereCondition.religion = religion;
-      if (mother_tongue) whereCondition.mothertongue = mother_tongue;
+      if (caste && caste.toLowerCase() !== "all") whereCondition.caste = caste;
+      if (religion && religion.toLowerCase() !== "all") whereCondition.religion = religion;
+      if (mother_tongue && mother_tongue.toLowerCase() !== "all") whereCondition.mothertongue = mother_tongue;
     }
 
     const profiles = await Profile.findAll({

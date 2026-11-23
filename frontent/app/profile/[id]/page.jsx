@@ -1,6 +1,6 @@
 "use client";
 
-import { getProfileById, searchMatches } from "@/app/redux/profileSlice";
+import { getProfileById, searchMatches, getAllProfiles } from "@/app/redux/profileSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +13,7 @@ import {
 import { Loader2, Search, X } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { BsFillSearchHeartFill } from "react-icons/bs";
@@ -85,6 +85,10 @@ const casteOptions = [
   "Aaru Nattu Vellala",
   "Achirapakkam Chettiar",
   "Adi Dravidar",
+  "agamudai mudaliar",
+  "Agamudai Mudaliyar",
+  "Agamudai-mudaliar",
+  "Agamudaiyar",
   "Agamudayar / Arcot / Thuluva Vellala",
   "Agaram Vellan Chettiar",
   "Ahirwar",
@@ -93,8 +97,12 @@ const casteOptions = [
   "Badaga",
   "Bairwa",
   "Balai",
+  "balija naidu (gajula)",
   "Beri Chettiar",
+  "Beri-Chettiyar",
   "Boyar",
+  "boyar chettiyar",
+  "brahmin",
   "Brahmin - Anaviln Desai",
   "Brahmin - Baidhiki/Vaidhiki",
   "Brahmin - Bardai",
@@ -137,15 +145,19 @@ const casteOptions = [
   "Illaththu Pillai",
   "Intercaste",
   "Isai Vellalar",
+  "Iyengar",
   "Iyengar Brahmin",
   "Iyer Brahmin",
   "Julaha",
+  "kaikolar",
   "Kamma Naidu",
   "Kanakkan Padanna",
   "Kandara",
   "Karkathar",
   "Karuneegar",
   "Kasukara",
+  "kavara naidu",
+  "Kavra naidu",
   "Kerala Mudali",
   "Khatik",
   "Kodikal Pillai",
@@ -160,6 +172,7 @@ const casteOptions = [
   "Kuruhini Chetty",
   "Kurumbar",
   "Kuruva",
+  "M.BC",
   "Manjapudur Chettiar",
   "Mannan / Velan / Vannan",
   "Maruthuvar",
@@ -175,8 +188,8 @@ const casteOptions = [
   "Naidu",
   "Nanjil Mudali",
   "Nanjil Nattu Vellalar",
-  "Nanjil Vellalar",
   "Nanjil pillai",
+  "Nanjil Vellalar",
   "Nankudi Vellalar",
   "Nattu Gounder",
   "Nattukottai Chettiar",
@@ -196,18 +209,20 @@ const casteOptions = [
   "Pillai",
   "Poundra",
   "Pulaya / Cheruman",
+  "rajalu",
   "Reddy",
   "Rohit / Chamar",
-  "SC",
-  "ST",
+  "S.C",
   "Sadhu Chetty",
   "Saiva Pillai Thanjavur",
   "Saiva Pillai Tirunelveli",
+  "Saiva Pillai,Vellalar",
   "Saiva Vellan chettiar",
   "Saliyar",
   "Samagar",
   "Sambava",
   "Satnami",
+  "SC",
   "Senai Thalaivar",
   "Senguntha Mudaliyar",
   "Sengunthar/Kaikolar",
@@ -216,9 +231,13 @@ const casteOptions = [
   "Sourashtra",
   "Sozhia Chetty",
   "Sozhiya Vellalar",
+  "ST",
+  "Telugu Chettiar",
   "Telugupatti",
   "Thandan",
   "Thondai Mandala Vellalar",
+  "Thuluva Vellalar",
+  "Thuluva vellalar(Pillai)",
   "Urali Gounder",
   "Vadambar",
   "Vadugan",
@@ -226,8 +245,11 @@ const casteOptions = [
   "Vaniya Chettiar",
   "Vannar",
   "Vannia Kula Kshatriyar",
+  "Vanniar",
+  "Vanniyar",
   "Veera Saivam",
   "Veerakodi Vellala",
+  "Vellala",
   "Vellalar",
   "Vellan Chettiars",
   "Vettuva Gounder",
@@ -318,9 +340,9 @@ const initial_height_to_cm = extractCmValue(
 // அல்லது நீங்கள் விரும்பும் வேறு ஒரு value: e.g., "205"
 
 const initialFilters = {
-  looking_for: "Bride",
+  looking_for: "all",
   age_from: "18",
-  age_to: "30",
+  age_to: "60",
   // height: "all", // Changed from '' to 'all'
   height_from: initial_height_from_cm || "137", // e.g., "137"
   // கடைசி Option-ன் CM மதிப்பு (அல்லது நீங்கள் விரும்பும் End value)
@@ -331,7 +353,7 @@ const initialFilters = {
   profile_id: "",
 };
 
-const FilterForm = ({ filters, setFilters, handleSearch, loading }) => {
+const FilterForm = ({ filters, setFilters, handleSearch, loading, casteList = casteOptions }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: e.target.value }));
@@ -607,7 +629,7 @@ const FilterForm = ({ filters, setFilters, handleSearch, loading }) => {
               <SelectItem value="all" className="text-[#4a2f1c]">
                 Any Caste
               </SelectItem>
-              {casteOptions.map((c) => (
+              {casteList.map((c) => (
                 <SelectItem
                   className="text-[#4a2f1c] text-[13px]"
                   key={c}
