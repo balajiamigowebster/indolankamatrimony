@@ -688,132 +688,253 @@ const FilterForm = ({ filters, setFilters, handleSearch, loading, casteList = ca
   );
 };
 
-const SKELETON_COUNT = 5;
-// 🚩 NEW COMPONENT: Profile Skeleton Loader
-const ProfileSkeleton = () => (
-  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
-    {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
-      <div
-        key={index}
-        className="flex-shrink-0 border rounded-lg p-3 shadow-sm bg-white animate-pulse"
-      >
-        {/* Photo Placeholder */}
-        <Skeleton className="h-40 w-full mb-2 bg-gray-200" />
-
-        {/* Name Placeholder */}
-        <Skeleton className="h-4 w-3/4 mb-1 bg-gray-200" />
-
-        {/* ID Placeholder */}
-        <Skeleton className="h-3 w-1/2 mb-3 bg-gray-200" />
-
-        {/* Age Placeholder */}
-        <Skeleton className="h-3 w-1/3 bg-gray-200" />
-      </div>
-    ))}
-  </div>
-);
-
-// 🚩 NEW COMPONENT: Drawer-க்குள் Match Profiles-ஐக் காட்ட இந்த Component-ஐப் பயன்படுத்துவோம்
-const MatchDrawerContent = ({
+// 🌟 STUNNING ANIMATED MATCH RESULTS MODAL
+const MatchResultsModal = ({
+  isOpen,
+  onClose,
   matchProfiles,
   matchErrors,
   loading,
-  hasSearched,
+  filters,
   router,
-  formatImageUrl,
 }) => {
-  // hasSearched true ஆகவும், loading false ஆகவும் இருக்கும்போதுதான் உள்ளே வரும்
-  if (!hasSearched || loading) return null;
+  const scrollContainerRef = React.useRef(null);
 
-  // 🚩 HIGHLIGHT: Loading State (Skeleton காட்டுகிறது)
-  if (loading) {
-    return (
-      <>
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4 text-[#4a2f1c]">
-            Searching for Matches...
-          </h2>
-        </div>
-        <ProfileSkeleton />
-      </>
-    );
-  }
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -320, behavior: "smooth" });
+    }
+  };
 
-  if (matchErrors) {
-    return (
-      <div className="p-6 text-center">
-        <h3 className="text-xl font-semibold text-red-500">
-          Error: Failed to fetch profiles ❌
-        </h3>
-        <p className="mt-2 text-gray-600">Please try the search again later.</p>
-      </div>
-    );
-  }
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 320, behavior: "smooth" });
+    }
+  };
 
-  if (matchProfiles.length === 0) {
-    return (
-      <div className="p-6 text-center">
-        <h3 className="text-xl font-semibold text-red-500">
-          No Matching Profiles Found 😟
-        </h3>
-        <p className="mt-2 text-gray-600">
-          Try modifying your search filters to get better results.
-        </p>
-      </div>
-    );
-  }
+  // Close on Escape key and prevent background scroll
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onClose]);
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl py-5 text-start font-bold mb-4 text-[#4a2f1c]">
-        Found **{matchProfiles.length}** Matching Profiles
-      </h2>
-      <div className="bg-white mb-10 p-4 mx-5 rounded-lg shadow-md overflow-x-auto">
-        <div className="flex space-x-4 pb-2 justify-center">
-          {matchProfiles.map((p) => (
-            <div
-              key={p.id}
-              onClick={() => router.push(`/profile/${p.id}`)}
-              className="w-64 flex-shrink-0 border rounded-lg p-3 shadow-sm hover:shadow-md transition duration-200 cursor-pointer bg-white"
-            >
-              <div>
-                <img
-                  src={resolveImageUrl(p.image, p.gender)}
-                  alt={p.pname || p.name || "Profile"}
-                  onError={(e) => handleImageError(e, p.gender)}
-                  className="h-[150px] md:h-[300] md:w-[280px] w-[120px] object-cover"
-                />
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-8">
+          {/* Backdrop with blur & fade */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="fixed inset-0 bg-black/65 backdrop-blur-sm"
+            onClick={onClose}
+          />
+
+          {/* Modal Box with spring scale & slide */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.93, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", damping: 25, stiffness: 350 }}
+            className="relative w-full max-w-5xl max-h-[92vh] bg-gradient-to-b from-white via-white to-[#faf6f2] rounded-2xl shadow-2xl border border-[#e8dfd8] flex flex-col z-10 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="border-b border-[#eee4dc] bg-white/90 backdrop-blur-md px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4a2f1c] to-[#71482b] text-white flex items-center justify-center shadow-md">
+                  <BsSearchHeart className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg md:text-xl font-bold text-[#4a2f1c]">
+                      Matching Profiles
+                    </h2>
+                    {!loading && !matchErrors && matchProfiles?.length > 0 && (
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#4a2f1c]/10 text-[#4a2f1c] border border-[#4a2f1c]/20">
+                        {matchProfiles.length} Found
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 hidden sm:block">
+                    Filtered by: {filters.looking_for === "all" ? "All Genders" : filters.looking_for} • {filters.caste === "all" ? "Any Caste" : filters.caste} • Age: {filters.age_from}-{filters.age_to}
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center gap-5">
-                  <h1 className="font-bold text-base text-[#4a2f1c] truncate">
-                    {p.pname || "N/A"}
-                  </h1>
-                  <h1 className="font-bold text-base text-black truncate">
-                    {p.age || "N/A"}
-                  </h1>
-                </div>
-
-                {/* <hr className="my-1 border-gray-100" /> */}
-                <div className="flex justify-start text-[#4a2f1c] font-semibold text-md">
-                  <span className="">Edu :</span>
-                  <span className="px-1">{p.education || "N/A"}</span>
-                </div>
-                <div className="text-md text-[#4a2f1c] font-semibold">
-                  Caste: {p.caste || "N/A"}
-                </div>
-                <div className="text-md text-[#4a2f1c] font-semibold">
-                  ID: {p.id || "N/A"}
-                </div>
+              {/* Navigation Controls & Close */}
+              <div className="flex items-center gap-2">
+                {!loading && matchProfiles?.length > 3 && (
+                  <div className="hidden sm:flex items-center gap-1.5 mr-2">
+                    <button
+                      onClick={scrollLeft}
+                      className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-[#4a2f1c] hover:text-white hover:border-[#4a2f1c] transition duration-200"
+                      title="Scroll left"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={scrollRight}
+                      className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-[#4a2f1c] hover:text-white hover:border-[#4a2f1c] transition duration-200"
+                      title="Scroll right"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition duration-200"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
-          ))}
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+              {/* Loading State */}
+              {loading && (
+                <div className="py-14 flex flex-col items-center justify-center">
+                  <div className="w-12 h-12 rounded-full border-4 border-[#4a2f1c]/20 border-t-[#4a2f1c] animate-spin mb-4" />
+                  <p className="text-sm font-medium text-[#4a2f1c]">Finding the best matching profiles...</p>
+                </div>
+              )}
+
+              {/* Error State */}
+              {!loading && matchErrors && (
+                <div className="py-14 text-center">
+                  <div className="w-12 h-12 mx-auto rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-3">
+                    <X className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-800">Failed to load profiles</h3>
+                  <p className="text-xs text-gray-500 mt-1">Please adjust your search filters and try again.</p>
+                </div>
+              )}
+
+              {/* Empty State */}
+              {!loading && !matchErrors && matchProfiles?.length === 0 && (
+                <div className="py-14 text-center">
+                  <div className="w-14 h-14 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                    <Search className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-800">No Matching Profiles Found</h3>
+                  <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                    Try broadening your age, height, or caste filters to discover more partner matches.
+                  </p>
+                </div>
+              )}
+
+              {/* Match Profiles Horizontal List */}
+              {!loading && !matchErrors && matchProfiles?.length > 0 && (
+                <div
+                  ref={scrollContainerRef}
+                  className="flex space-x-5 overflow-x-auto pb-4 pt-1 px-1 justify-start items-stretch scroll-smooth"
+                  style={{ scrollbarWidth: "thin" }}
+                >
+                  {matchProfiles.map((p, idx) => (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.04, duration: 0.25 }}
+                      onClick={() => {
+                        onClose();
+                        router.push(`/profile/${p.id}`);
+                      }}
+                      className="group w-[250px] sm:w-[270px] flex-shrink-0 bg-white rounded-2xl border border-[#ebdcd0] shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col"
+                    >
+                      {/* Photo Area */}
+                      <div className="relative w-full h-[250px] bg-neutral-100 overflow-hidden">
+                        <img
+                          src={resolveImageUrl(p.image, p.gender)}
+                          alt={p.pname || p.name || "Profile"}
+                          onError={(e) => handleImageError(e, p.gender)}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+
+                        {/* Top Badges */}
+                        <div className="absolute top-2.5 left-2.5 bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold px-2 py-0.5 rounded-md shadow-sm">
+                          ID: #{p.id}
+                        </div>
+                        <div className="absolute top-2.5 right-2.5 bg-white/90 backdrop-blur-sm text-[#4a2f1c] text-[11px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                          {p.gender || "Profile"}
+                        </div>
+
+                        {/* Bottom Name & Age on Image */}
+                        <div className="absolute bottom-2.5 left-3 right-3 text-white">
+                          <h4 className="font-bold text-base truncate drop-shadow-sm">
+                            {p.pname || "N/A"}
+                          </h4>
+                          <p className="text-xs text-white/90 drop-shadow-sm font-medium">
+                            {p.age ? `${p.age} Yrs` : "Age N/A"} • {p.height && p.height !== "N/A" ? p.height : "Height N/A"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Info Area */}
+                      <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3 bg-white">
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex items-center text-gray-700">
+                            <span className="font-semibold text-[#4a2f1c] w-14 shrink-0">Caste:</span>
+                            <span className="truncate bg-[#f7f2ed] text-[#4a2f1c] px-2 py-0.5 rounded font-medium">
+                              {p.caste || "N/A"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center text-gray-700">
+                            <span className="font-semibold text-[#4a2f1c] w-14 shrink-0">Edu:</span>
+                            <span className="truncate text-gray-600 font-medium">
+                              {p.education || "N/A"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center text-gray-700">
+                            <span className="font-semibold text-[#4a2f1c] w-14 shrink-0">Work:</span>
+                            <span className="truncate text-gray-600 font-medium">
+                              {p.occupation || "N/A"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Button */}
+                        <button className="w-full mt-2 py-2 px-3 bg-[#4a2f1c] hover:bg-[#342113] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm group-hover:shadow transition duration-200">
+                          <span>View Full Profile</span>
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-[#eee4dc] bg-gray-50/70 px-5 py-2.5 flex items-center justify-between text-xs text-gray-500 shrink-0">
+              <span className="hidden sm:inline">Use arrow buttons or swipe to explore profiles</span>
+              <span className="sm:hidden">Swipe to explore profiles</span>
+              <span className="font-medium text-[#4a2f1c]">Click any profile to view details</span>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 };
+
 
 const page = () => {
   const [profileData, setProfileData] = useState(null);
@@ -842,6 +963,24 @@ const page = () => {
     matchProfiles,
     matchErrors,
   } = useSelector((state) => state.profile);
+
+  const combinedCasteOptions = useMemo(() => {
+    const set = new Set(casteOptions);
+    if (Array.isArray(profiles)) {
+      profiles.forEach((p) => {
+        if (p.caste && p.caste !== "N/A" && p.caste.trim()) {
+          set.add(p.caste.trim());
+        }
+      });
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [profiles]);
+
+  useEffect(() => {
+    if (!profiles || profiles.length === 0) {
+      dispatch(getAllProfiles());
+    }
+  }, [dispatch, profiles]);
 
   //console.log(matchProfiles);
 
