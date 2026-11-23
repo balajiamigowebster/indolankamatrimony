@@ -341,7 +341,7 @@ const initial_height_to_cm = extractCmValue(
 // அல்லது நீங்கள் விரும்பும் வேறு ஒரு value: e.g., "205"
 
 const initialFilters = {
-  looking_for: "all",
+  looking_for: "Bride",
   age_from: "18",
   age_to: "60",
   // height: "all", // Changed from '' to 'all'
@@ -409,7 +409,7 @@ const FilterForm = ({ filters, setFilters, handleSearch, loading, casteList = ca
             value={filters.looking_for}
             onValueChange={(v) => handleSelectChange("looking_for", v)}
           >
-            <SelectTrigger className="h-20 py-4 border-2 w-full border-black/35">
+            <SelectTrigger className="h-10 py-4 border-2 w-full border-black/35">
               <SelectValue placeholder="Select Gender" />
             </SelectTrigger>
             <SelectContent className="text-[#4a2f1c]">
@@ -418,6 +418,9 @@ const FilterForm = ({ filters, setFilters, handleSearch, loading, casteList = ca
               </SelectItem>
               <SelectItem className="text-[#4a2f1c] text-[13px]" value="Groom">
                 Groom
+              </SelectItem>
+              <SelectItem className="text-[#4a2f1c] text-[13px]" value="all">
+                All (Bride & Groom)
               </SelectItem>
             </SelectContent>
           </Select>
