@@ -10,12 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, X, ChevronLeft, ChevronRight, ArrowRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 import { BsFillSearchHeartFill } from "react-icons/bs";
 import { BsSearchHeart } from "react-icons/bs";
 import {
@@ -1126,124 +1127,12 @@ const page = () => {
                 setFilters={setFilters}
                 handleSearch={handleSearch}
                 loading={loading}
+                casteList={combinedCasteOptions}
               />
             </div>
           </div>
         </div>
-        <div className="hidden md:block lg:block">
-          {/* 🚩 NEW LOGIC: Search panna apuram mattum results-a show pannanum */}
-          {hasSearched && (
-            <div className="mt-4">
-              <Drawer
-                open={isDrawerOpen}
-                onOpenChange={setIsDrawerOpen}
-                direction="bottom"
-                className="w-full"
-              >
-                {/* Loading State */}
-                {/* {loading && (
-                  <div className="flex justify-center items-center h-48 p-6 border rounded-lg bg-white shadow-md">
-                    <Loader2 className="animate-spin h-6 w-6 text-[#4a2f1c]" /> 
-                    <span className="ml-2 text-lg text-gray-700">
-                      Searching for Matches...
-                    </span>
-                  </div>
-                )} */}
-                {/* Results and No Match State (Loading mudinjadhukku apuram mattum) */}
-                {/* {!loading && (
-                  <>
-                    <h2 className="text-2xl py-5 text-start font-bold mb-4 text-[#4a2f1c]">
-                      Found **{matchProfiles.length}** Matching Profiles
-                    </h2>
-
-                    {matchProfiles.length === 0 ? (
-                     
-                      <div className="p-6 text-center border mb-10 rounded-lg bg-white shadow-md">
-                        <h3 className="text-xl font-semibold text-red-500">
-                          No Matching Profiles Found 😟
-                        </h3>
-                        <p className="mt-2 text-gray-600">
-                          try modifying your search filters to get better
-                          results.
-                        </p>
-                      </div>
-                    ) : (
-                    
-                      <div className="bg-white mb-10 p-4 mx-5 rounded-lg shadow-md overflow-x-auto">
-                        <div className="flex space-x-4 pb-2">
-                          {matchProfiles.map((p) => (
-                            <div
-                              key={p.id}
-                              onClick={() => router.push(`/profile/${p.id}`)}
-                              className="w-64 flex-shrink-0 border rounded-lg p-3 shadow-sm hover:shadow-md transition duration-200 cursor-pointer bg-white"
-                            >
-                             
-                              <div>
-                                <img
-                                  src={formatImageUrl(p.image, p.gender)}
-                                  alt={p.name || "Profile"}
-                                  className="h-[150px] md:h-[250] md:w-[180px] w-[120px]"
-                                />
-                              </div>
-                           
-                              <div className="space-y-1 text-sm">
-                                <div className="font-bold text-base text-[#4a2f1c] truncate">
-                                  {p.pname || "N/A"}
-                                </div>
-                                <div className="text-xs text-[#4a2f1c] font-semibold">
-                                  ID: {p.id || "N/A"}
-                                </div>
-                                <hr className="my-1 border-gray-100" />
-                                <div className="flex justify-start text-[#4a2f1c]">
-                                  <span className="font-medium">Age:</span>
-                                  <span className="px-1">{p.age || "N/A"}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )} */}
-
-                <DrawerContent className="h-[90vh] fixed bottom-0 left-0 right-0 max-w-6xl mx-auto rounded-t-[10px] flex flex-col">
-                  <DrawerHeader className="relative border-b pb-2">
-                    <DrawerTitle className="text-[#4a2f1c]">
-                      Search Results
-                    </DrawerTitle>
-                    <DrawerDescription>
-                      Matching profiles based on your filters.
-                    </DrawerDescription>
-                    <DrawerClose asChild>
-                      <Button
-                        variant="ghost"
-                        className="absolute top-4 right-4 p-2"
-                      >
-                        <X className="h-5 w-5" />
-                      </Button>
-                    </DrawerClose>
-                  </DrawerHeader>
-                  <div className="flex-grow overflow-y-auto">
-                    <MatchDrawerContent
-                      matchProfiles={matchProfiles}
-                      matchErrors={matchErrors}
-                      loading={loading}
-                      hasSearched={hasSearched}
-                      router={router}
-                      formatImageUrl={formatImageUrl}
-                    />
-                  </div>
-                  <DrawerFooter className="border-t pt-2">
-                    <p className="text-xs text-center text-black">
-                      Click on a profile to view full details.
-                    </p>
-                  </DrawerFooter>
-                </DrawerContent>
-              </Drawer>
-            </div>
-          )}
-        </div>
+        
 
         {/* 2. Personal Details Section in a Box */}
         <DetailBox title="Personal Details">
@@ -1291,123 +1180,21 @@ const page = () => {
             setFilters={setFilters}
             handleSearch={handleSearch}
             loading={loading}
-          />
+                casteList={combinedCasteOptions}
+              />
         </div>
       </div>
-      <div className="md:hidden lg:hidden">
-        {/* 🚩 NEW LOGIC: Search panna apuram mattum results-a show pannanum */}
-        {hasSearched && (
-          <div className="mt-4">
-            <Drawer
-              open={isDrawerOpen}
-              onOpenChange={setIsDrawerOpen}
-              direction="bottom"
-              className="w-full"
-            >
-              {/* Loading State */}
-              {loading && (
-                <div className="flex justify-center items-center h-48 p-6 border rounded-lg bg-white shadow-md">
-                  <Loader2 className="animate-spin h-6 w-6 text-[#4a2f1c]" /> 
-                  <span className="ml-2 text-lg text-gray-700">
-                    Searching for Matches...
-                  </span>
-                </div>
-              )}
-              {/* Results and No Match State (Loading mudinjadhukku apuram mattum) */}
-              {/* {!loading && (
-                  <>
-                    <h2 className="text-2xl py-5 text-start font-bold mb-4 text-[#4a2f1c]">
-                      Found **{matchProfiles.length}** Matching Profiles
-                    </h2>
-
-                    {matchProfiles.length === 0 ? (
-                     
-                      <div className="p-6 text-center border mb-10 rounded-lg bg-white shadow-md">
-                        <h3 className="text-xl font-semibold text-red-500">
-                          No Matching Profiles Found 😟
-                        </h3>
-                        <p className="mt-2 text-gray-600">
-                          try modifying your search filters to get better
-                          results.
-                        </p>
-                      </div>
-                    ) : (
-                    
-                      <div className="bg-white mb-10 p-4 mx-5 rounded-lg shadow-md overflow-x-auto">
-                        <div className="flex space-x-4 pb-2">
-                          {matchProfiles.map((p) => (
-                            <div
-                              key={p.id}
-                              onClick={() => router.push(`/profile/${p.id}`)}
-                              className="w-64 flex-shrink-0 border rounded-lg p-3 shadow-sm hover:shadow-md transition duration-200 cursor-pointer bg-white"
-                            >
-                             
-                              <div>
-                                <img
-                                  src={formatImageUrl(p.image, p.gender)}
-                                  alt={p.name || "Profile"}
-                                  className="h-[150px] md:h-[250] md:w-[180px] w-[120px]"
-                                />
-                              </div>
-                           
-                              <div className="space-y-1 text-sm">
-                                <div className="font-bold text-base text-[#4a2f1c] truncate">
-                                  {p.pname || "N/A"}
-                                </div>
-                                <div className="text-xs text-[#4a2f1c] font-semibold">
-                                  ID: {p.id || "N/A"}
-                                </div>
-                                <hr className="my-1 border-gray-100" />
-                                <div className="flex justify-start text-[#4a2f1c]">
-                                  <span className="font-medium">Age:</span>
-                                  <span className="px-1">{p.age || "N/A"}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )} */}
-
-              <DrawerContent className="h-[90vh] fixed bottom-0 left-0 right-0 max-w-6xl mx-auto rounded-t-[10px] flex flex-col">
-                <DrawerHeader className="relative border-b pb-2">
-                  <DrawerTitle className="text-[#4a2f1c]">
-                    Search Results
-                  </DrawerTitle>
-                  <DrawerDescription>
-                    Matching profiles based on your filters.
-                  </DrawerDescription>
-                  <DrawerClose asChild>
-                    <Button
-                      variant="ghost"
-                      className="absolute top-4 right-4 p-2"
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </DrawerClose>
-                </DrawerHeader>
-                <div className="flex-grow overflow-y-auto">
-                  <MatchDrawerContent
-                    matchProfiles={matchProfiles}
-                    matchErrors={matchErrors}
-                    loading={loading}
-                    hasSearched={hasSearched}
-                    router={router}
-                    formatImageUrl={formatImageUrl}
-                  />
-                </div>
-                <DrawerFooter className="border-t pt-2">
-                  <p className="text-xs text-center  text-black">
-                    Click on a profile to view full details.
-                  </p>
-                </DrawerFooter>
-              </DrawerContent>
-            </Drawer>
-          </div>
-        )}
-      </div>
+      
+          {/* 🌟 STUNNING ANIMATED MATCH RESULTS MODAL */}
+      <MatchResultsModal
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        matchProfiles={matchProfiles}
+        matchErrors={matchErrors}
+        loading={loading}
+        filters={filters}
+        router={router}
+      />
     </div>
   );
 };
