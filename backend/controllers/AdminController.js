@@ -565,15 +565,36 @@ exports.updateProfile = async (req, res) => {
       updateData.imagePublicId = null;
     }
 
+    let finalGallery = null;
+    let hasGalleryChanges = false;
+
+    if (updateData.existingGallery !== undefined) {
+      hasGalleryChanges = true;
+      try {
+        const parsed =
+          typeof updateData.existingGallery === "string"
+            ? JSON.parse(updateData.existingGallery)
+            : updateData.existingGallery;
+        finalGallery = Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        finalGallery = [];
+      }
+      delete updateData.existingGallery;
+    }
+
     if (req.files && req.files.gallery && req.files.gallery.length > 0) {
-      const galleryUrls = [];
+      hasGalleryChanges = true;
+      if (finalGallery === null) {
+        finalGallery = normalizeGalleryUrls(profile.gallery);
+      }
+      const newGalleryUrls = [];
       for (const gFile of req.files.gallery) {
         let gUploaded = false;
         try {
           const gCloud = await cloudinary.uploader.upload(gFile.path, {
             folder: "IndolankaMatrimonyProfiles",
           });
-          galleryUrls.push(gCloud.secure_url);
+          newGalleryUrls.push(gCloud.secure_url);
           gUploaded = true;
           if (fs.existsSync(gFile.path)) fs.unlinkSync(gFile.path);
         } catch (e) {}
@@ -587,12 +608,16 @@ exports.updateProfile = async (req, res) => {
             req.originalUrl && req.originalUrl.includes("indolankamatrimony_working")
               ? "/indolankamatrimony_working"
               : "";
-          galleryUrls.push(`${protocol}://${host}${subpath}/uploads/${gFile.filename}`);
+          newGalleryUrls.push(`${protocol}://${host}${subpath}/uploads/${gFile.filename}`);
         }
       }
-      if (galleryUrls.length > 0) {
-        updateData.gallery = JSON.stringify(galleryUrls);
-      }
+      finalGallery = [...finalGallery, ...newGalleryUrls];
+    }
+
+    if (hasGalleryChanges && finalGallery !== null) {
+      updateData.gallery = JSON.stringify(finalGallery);
+    } else {
+      delete updateData.gallery;
     }
 
     // Update the profile in the database

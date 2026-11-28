@@ -55,6 +55,9 @@ const EditProfile = () => {
   // 🖼️ NEW: State to hold the URL for the displayed image (Backend URL or Local File Preview)
   const [displayImageUrl, setDisplayImageUrl] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
+  const MAX_IMAGE_SIZE = 500 * 1024; // 500 KB
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [existingGallery, setExistingGallery] = useState([]);
   const router = useRouter();
 
   const [otherInputs, setOtherInputs] = useState({
@@ -1255,6 +1258,7 @@ const EditProfile = () => {
     { label: "Address Details", name: "addressdetails", type: "textarea" },
     { label: "Phone Number", name: "phonenumber", type: "input" },
     { label: "Profile Image", name: "image", type: "file" },
+    { label: "Gallery Images", name: "gallery", type: "file", multiple: true },
   ];
   // ---------------------------------------------------------------------------------------------------
 
@@ -1431,24 +1435,48 @@ const EditProfile = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast.error("Profile image must be less than 500KB.");
+        e.target.value = "";
+        setProfileImageFile(null);
+        return;
+      }
       // Set the file object for potential upload
       setProfileImageFile(file);
       // Create a local URL to display the newly selected image immediately
       const localImageUrl = URL.createObjectURL(file);
       setDisplayImageUrl(localImageUrl);
-      // setFormData((prev) => ({ ...prev, image: localImageUrl }));
-      // 🔴 NOTE: In a real scenario, you'd typically handle image upload (e.g., to Cloudinary)
-      // in a separate step and store the resulting URL in formData.
     } else {
       setProfileImageFile(null);
       if (!e.target.value) {
         const originalImageUrl =
-          singleProfile?.profileImage && singleProfile.profileImage !== "N/A"
-            ? singleProfile.profileImage
+          (singleProfile?.image || singleProfile?.profileImage) &&
+          (singleProfile.image !== "N/A" && singleProfile.profileImage !== "N/A")
+            ? singleProfile.image || singleProfile.profileImage
             : null;
         setDisplayImageUrl(originalImageUrl);
       }
     }
+  };
+
+  const handleGalleryChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    const invalidFiles = files.filter((f) => f.size > MAX_IMAGE_SIZE);
+    if (invalidFiles.length > 0) {
+      toast.error("Each gallery image must be less than 500KB.");
+      e.target.value = "";
+      setGalleryImages([]);
+      return;
+    }
+    setGalleryImages(files);
+  };
+
+  const removeExistingGalleryImage = (indexToRemove) => {
+    setExistingGallery((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const removeNewGalleryImage = (indexToRemove) => {
+    setGalleryImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   // 🔄 Initial Data Fetch Effect (Unchanged)
@@ -1520,14 +1548,35 @@ const EditProfile = () => {
         setDobDate(null);
       }
 
-      // 🏞️ Set the Cloudinary URL for display
-      // Assuming singleProfile.profileImage holds the Cloudinary URL (or a field like it)
-      const imageUrl = mapValue(singleProfile.profileImage); // Use a new field from the backend
+      // 🏞️ Set the Cloudinary/Uploads URL for display
+      const imageUrl = mapValue(singleProfile.image || singleProfile.profileImage);
       if (imageUrl && imageUrl !== "N/A") {
-        setDisplayImageUrl(imageUrl); // <--- ✅ Use the displayImageUrl state
+        setDisplayImageUrl(imageUrl);
       } else {
         setDisplayImageUrl(null);
       }
+
+      // 🖼️ Existing Gallery Images
+      if (singleProfile.gallery) {
+        let gList = [];
+        if (Array.isArray(singleProfile.gallery)) {
+          gList = singleProfile.gallery;
+        } else if (typeof singleProfile.gallery === "string") {
+          try {
+            const parsed = JSON.parse(singleProfile.gallery);
+            gList = Array.isArray(parsed) ? parsed : [parsed];
+          } catch (e) {
+            gList = singleProfile.gallery
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+          }
+        }
+        setExistingGallery(gList.filter((url) => url && url !== "N/A"));
+      } else {
+        setExistingGallery([]);
+      }
+      setGalleryImages([]);
     }
   }, [singleProfile]);
 
@@ -1540,6 +1589,7 @@ const EditProfile = () => {
 
     // 2. Iterate through formData and append to FormData object
     for (const key in formData) {
+      if (key === "gallery" || key === "image") continue;
       let value = formData[key];
 
       // a. Handle Education array: convert to comma-separated string
@@ -1566,7 +1616,12 @@ const EditProfile = () => {
       dataToSubmit.append("image", profileImageFile);
     }
 
-    // 3. Handle the image file separately
+    // 4. Handle gallery files and existing gallery
+    dataToSubmit.append("existingGallery", JSON.stringify(existingGallery));
+    if (galleryImages && galleryImages.length > 0) {
+      galleryImages.forEach((img) => dataToSubmit.append("gallery", img));
+    }
+
     try {
       const resultAction = await dispatch(
         adminUpdateProfile({ id: profileId, updateData: dataToSubmit })
@@ -1579,7 +1634,7 @@ const EditProfile = () => {
         // Handle error from the thunk
         const errorPayload = resultAction.payload;
         const errorMessage =
-          errorPayload.message || "An unknown error occurred.";
+          errorPayload?.message || "An unknown error occurred.";
         toast.error(errorMessage);
       }
     } catch (error) {
@@ -1596,13 +1651,10 @@ const EditProfile = () => {
     if (!imageUrl) return null;
     return (
       <div className="mt-2 w-20 h-20 rounded-full overflow-hidden border border-gray-300">
-        <Image
+        <img
           src={imageUrl}
           alt="Profile"
-          width={80} // Small size for view
-          height={80} // Small size for view
-          objectFit="cover"
-          className="w-full h-full"
+          className="w-full h-full object-cover"
         />
       </div>
     );
@@ -1776,8 +1828,9 @@ const EditProfile = () => {
               );
             }
 
-            // 4. FILE INPUT (UPDATED with onChange and NEW Image Display)
+            // 4. FILE INPUT (UPDATED with onChange, Gallery support, and Image Display)
             if (field.type === "file") {
+              const isGallery = field.name === "gallery";
               return (
                 <div key={field.name} className="flex flex-col">
                   <div className="lg:flex-row w-full lg:flex lg:center lg:gap-10">
@@ -1789,13 +1842,85 @@ const EditProfile = () => {
                       <Input
                         type="file"
                         accept="image/*"
-                        onChange={handleImageChange}
+                        multiple={isGallery}
+                        onChange={isGallery ? handleGalleryChange : handleImageChange}
                         className={`py-[8px] border-black rounded`}
                       />
 
-                      {/* 🏞️ NEW: Display the image from backend/newly selected file */}
-                      {displayImageUrl && (
-                        <ImageDisplay imageUrl={profileImage} />
+                      {/* Display Profile Image */}
+                      {!isGallery && displayImageUrl && (
+                        <ImageDisplay imageUrl={displayImageUrl} />
+                      )}
+
+                      {/* Display Gallery Info & Previews */}
+                      {isGallery && (
+                        <div className="mt-2 space-y-2">
+                          {galleryImages.length > 0 && (
+                            <p className="text-xs text-neutral-600">
+                              {galleryImages.length} new image(s) selected
+                            </p>
+                          )}
+
+                          {/* Previews of newly selected gallery images */}
+                          {galleryImages.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {galleryImages.map((file, idx) => {
+                                const previewUrl = URL.createObjectURL(file);
+                                return (
+                                  <div
+                                    key={`new-g-${idx}`}
+                                    className="relative w-16 h-16 rounded border border-gray-300 overflow-hidden group"
+                                  >
+                                    <img
+                                      src={previewUrl}
+                                      alt={`New Gallery ${idx + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => removeNewGalleryImage(idx)}
+                                      className="absolute top-0 right-0 bg-red-600 text-white rounded-bl p-0.5 hover:bg-red-700"
+                                      title="Remove image"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {/* Existing Gallery Images */}
+                          {existingGallery.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-xs text-neutral-500 font-medium mb-1">
+                                Current Gallery Images ({existingGallery.length}):
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {existingGallery.map((url, idx) => (
+                                  <div
+                                    key={`exist-g-${idx}`}
+                                    className="relative w-16 h-16 rounded border border-gray-300 overflow-hidden group"
+                                  >
+                                    <img
+                                      src={url}
+                                      alt={`Existing Gallery ${idx + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => removeExistingGalleryImage(idx)}
+                                      className="absolute top-0 right-0 bg-red-600 text-white rounded-bl p-0.5 hover:bg-red-700"
+                                      title="Delete existing image"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
